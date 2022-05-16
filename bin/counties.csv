@@ -1,0 +1,91 @@
+id,name,country_id
+1,Zwettl,1
+2,Braunau am Inn,2
+3,St. Veit an der Glan,3
+4,Amstetten,1
+5,Linz-Land,2
+6,Vöcklabruck,2
+7,Liezen,4
+8,Steyr-Land,2
+9,Gmunden,2
+10,Urfahr-Umgebung,2
+11,Südoststeiermark,4
+12,Wolfsberg,3
+13,Baden,1
+14,Voitsberg,4
+15,St. Johann im Pongau,5
+16,Völkermarkt,3
+17,Bludenz,6
+18,Bregenz,6
+19,Bruck an der Leitha,1
+20,Bruck-Mürzzuschlag,4
+21,Gänserndorf,1
+22,Deutschlandsberg,4
+23,Dornbirn,6
+24,Horn,1
+25,Krems,1
+26,Wiener Neustadt,1
+27,Eferding,2
+28,Leoben,4
+29,Eisenstadt,7
+30,Feldkirch,6
+31,Feldkirchen,3
+32,Klagenfurt-Land,3
+33,Neusiedl am See,7
+34,Freistadt,2
+35,Hartberg-Fürstenfeld,4
+36,Graz-Umgebung,4
+37,Korneuburg,1
+38,Weiz,4
+39,Neunkirchen,1
+40,Gmünd,1
+41,Spittal an der Drau,3
+42,Graz,4
+43,Perg,2
+44,Grieskirchen,2
+45,Waidhofen an der Thaya,1
+46,Güssing,7
+47,Lilienfeld,1
+48,Innsbruck-Land,8
+49,Hallein,5
+50,Hollabrunn,1
+51,Hermagor,3
+52,St. Pölten,1
+53,Imst,8
+54,Innsbruck,8
+55,Jennersdorf,7
+56,Murtal,4
+57,Kirchdorf,2
+58,Kitzbühel,8
+59,Klagenfurt am Wörthersee,3
+60,Tulln,1
+61,Krems an der Donau,1
+62,Kufstein,8
+63,Mistelbach,1
+64,Landeck,8
+65,Leibnitz,4
+66,Lienz,8
+67,Linz,2
+68,Melk,1
+69,Wels-Land,2
+70,Mattersburg,7
+71,Zell am See,5
+72,Mödling,1
+73,Murau,4
+74,Eisenstadt-Umgebung,7
+75,Salzburg-Umgebung,5
+76,Oberpullendorf,7
+77,Oberwart,7
+78,Ried im Innkreis,2
+79,Rohrbach,2
+80,Rust,7
+81,Salzburg,5
+82,Schärding,2
+83,Scheibbs,1
+84,Schwaz,8
+85,Steyr,2
+86,Villach,3
+87,Reutte,8
+88,Waidhofen an der Ybbs,1
+89,Wels,2
+90,Wien,9

@@ -1,0 +1,202 @@
+id,name,population,county_id
+1,Allentsteig,1736,1
+2,Altheim,4989,2
+3,Althofen,4692,3
+4,Amstetten,23569,4
+5,Ansfelden,17433,5
+6,Attnang-Puchheim,9101,6
+7,Bad Aussee,4911,7
+8,Bad Hall,5592,8
+9,Bad Ischl,14109,9
+10,Bad Leonfelden,4270,10
+11,Bad Radkersburg,3179,11
+12,Bad St. Leonhard im Lavanttal,4324,12
+13,Bad Vöslau,12312,13
+14,Baden,25817,13
+15,Bärnbach,5722,14
+16,Berndorf,9076,13
+17,Bischofshofen,10544,15
+18,Bleiburg,4071,16
+19,Bludenz,14951,17
+20,Braunau am Inn,17438,2
+21,Bregenz,29300,18
+22,Bruck an der Leitha,8153,19
+23,Bruck an der Mur,15650,20
+24,Deutsch-Wagram,9018,21
+25,Deutschlandsberg,11623,22
+26,Dornbirn,50333,23
+27,Drosendorf-Zissersdorf,1207,24
+28,Dürnstein,828,25
+29,Ebenfurth,3182,26
+30,Ebreichsdorf,11422,13
+31,Eferding,4276,27
+32,Eggenburg,3465,24
+33,Eisenerz,3742,28
+34,Eisenstadt,14895,29
+35,Enns,11900,5
+36,Fehring,7167,11
+37,Feldbach,13371,11
+38,Feldkirch,34987,30
+39,Feldkirchen in Kärnten,14289,31
+40,Ferlach,7206,32
+41,Fischamend,5578,19
+42,Frauenkirchen,2854,33
+43,Freistadt,7959,34
+44,Friedberg,2623,35
+45,Friesach,4875,3
+46,Frohnleiten,6517,36
+47,Fürstenfeld,8655,35
+48,Gallneukirchen,6625,10
+49,Gänserndorf,11832,21
+50,Geras,1269,24
+51,Gerasdorf bei Wien,11666,37
+52,Gföhl,3767,25
+53,Gleisdorf,11072,38
+54,Gloggnitz,5815,39
+55,Gmünd,5238,40
+56,Gmünd in Kärnten,2541,41
+57,Gmunden,13203,9
+58,Graz,291134,42
+59,Grein,2905,43
+60,Grieskirchen,4984,44
+61,Groß-Enzersdorf,11740,21
+62,Groß Gerungs,4436,1
+63,Groß-Siegharts,2710,45
+64,Güssing,3665,46
+65,Haag,5656,4
+66,Hainburg an der Donau,6975,19
+67,Hainfeld,3756,47
+68,Hall in Tirol,14243,48
+69,Hallein,21353,49
+70,Hardegg,1309,50
+71,Hartberg,6794,35
+72,Heidenreichstein,3882,40
+73,Hermagor-Pressegger See,6915,51
+74,Herzogenburg,7823,52
+75,Hohenems,16946,23
+76,Hollabrunn,11944,50
+77,Horn,6409,24
+78,Imst,10882,53
+79,Innsbruck,131059,54
+80,Jennersdorf,4121,55
+81,Judenburg,9631,56
+82,Kapfenberg,22380,20
+83,Kindberg,8118,20
+84,Kirchdorf an der Krems,4626,57
+85,Kirchschlag in der Buckligen Welt,2820,26
+86,Kitzbühel,8239,58
+87,Klagenfurt am Wörthersee,101765,59
+88,Klosterneuburg,27588,60
+89,Knittelfeld,12574,56
+90,Köflach,9689,14
+91,Korneuburg,13334,37
+92,Krems an der Donau,24837,61
+93,Kufstein,19512,62
+94,Laa an der Thaya,6246,63
+95,Laakirchen,9743,9
+96,Landeck,7686,64
+97,Langenlois,7469,25
+98,Leibnitz,12544,65
+99,Leoben,24189,28
+100,Leonding,28938,5
+101,Lienz,11935,66
+102,Liezen,8196,7
+103,Lilienfeld,2635,47
+104,Linz,206537,67
+105,Litschau,2192,40
+106,Maissau,1938,50
+107,Mank,3221,68
+108,Mannersdorf am Leithagebirge,4110,19
+109,Marchegg,2988,21
+110,Marchtrenk,14334,69
+111,Mariazell,3626,20
+112,Mattersburg,7538,70
+113,Mattighofen,7098,2
+114,Mautern an der Donau,3482,25
+115,Melk,5596,68
+116,Mittersill,5575,71
+117,Mistelbach,11592,63
+118,Mödling,20559,72
+119,Murau,3467,73
+120,Mureck,3490,11
+121,Mürzzuschlag,8227,20
+122,Neufeld an der Leitha,3587,74
+123,Neulengbach,8345,52
+124,Neumarkt am Wallersee,6492,75
+125,Neunkirchen,12620,39
+126,Neusiedl am See,8643,33
+127,Oberndorf bei Salzburg,5850,75
+128,Oberpullendorf,3265,76
+129,Oberwart,7662,77
+130,Oberwölz,2950,73
+131,Perg,8802,43
+132,Peuerbach,4661,44
+133,Pinkafeld,5882,77
+134,Pöchlarn,3944,68
+135,Poysdorf,5500,63
+136,Pregarten,5546,34
+137,Pressbaum,7762,52
+138,Pulkau,1506,50
+139,Purbach am Neusiedler See,2899,74
+140,Purkersdorf,9890,52
+141,Raabs an der Thaya,2631,45
+142,Radenthein,5769,41
+143,Radstadt,4878,15
+144,Rattenberg,448,62
+145,Retz,4240,50
+146,Ried im Innkreis,12209,78
+147,Rohrbach-Berg,5182,79
+148,Rottenmann,5111,7
+149,Rust,2000,80
+150,Saalfelden am Steinernen Meer,16790,71
+151,Salzburg,155416,81
+152,Sankt Andrä,9850,12
+153,St. Johann im Pongau,11331,15
+154,St. Pölten,55878,52
+155,St. Valentin,9320,4
+156,Sankt Veit an der Glan,12184,3
+157,Schärding,5216,82
+158,Scheibbs,4122,83
+159,Schladming,6576,7
+160,Schrattenthal,894,50
+161,Schrems,5356,40
+162,Schwanenstadt,4494,6
+163,Schwaz,13810,84
+164,Schwechat,20375,19
+165,Seekirchen am Wallersee,11001,75
+166,Spielberg,5361,56
+167,Spittal an der Drau,15151,41
+168,Stadtschlaining,2004,77
+169,Steyr,37952,85
+170,Steyregg,4934,10
+171,Stockerau,16789,37
+172,Straßburg,1991,3
+173,Ternitz,14640,39
+174,Traiskirchen,18774,13
+175,Traismauer,6391,52
+176,Traun,24828,5
+177,Trieben,3329,7
+178,Trofaiach,10994,28
+179,Tulln an der Donau,16380,60
+180,Villach,63236,86
+181,Vils,1483,87
+182,Vöcklabruck,12445,6
+183,Voitsberg,9391,14
+184,Völkermarkt,10866,16
+185,Waidhofen an der Thaya,5289,45
+186,Waidhofen an der Ybbs,11134,88
+187,Weitra,2629,40
+188,Weiz,11756,38
+189,Wels,62654,89
+190,Wien,1920949,90
+191,Wiener Neustadt,46456,26
+192,Wieselburg,4408,83
+193,Wilhelmsburg,6577,52
+194,Wolfsberg,25031,12
+195,Wolkersdorf im Weinviertel,7342,63
+196,Wörgl,14179,62
+197,Ybbs an der Donau,5565,68
+198,Zell am See,10131,71
+199,Zeltweg,7039,56
+200,Zistersdorf,5356,21
+201,Zwettl,10723,1
