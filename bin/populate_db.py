@@ -1,3 +1,4 @@
+#!/usr/bin/env python
 import csv
 import requests
 import sys
@@ -49,20 +50,14 @@ def populate_cities(base_url):
             else:
                 success_counter += 1
         print(f"Created {success_counter} cities")
-        # r = requests.post(f"{base_url}/cities", json={"name": "Legoland1", 
-        #     "population": 1, "county_id": 3})
-        # print(r.status_code)
-        # print(r.text)
 
-def delete_city(city_id, base_url):
-    r = requests.delete(f"{base_url}/cities/{city_id}")
-    print(r.status_code)
-    print(r.text)
 
 if __name__ == "__main__":
-    populate_countries(sys.argv[1])
-    populate_counties(sys.argv[1])
-    populate_cities(sys.argv[1])
-
-    #delete_city(1, sys.argv[1])
+    if len(sys.argv) < 2:
+        base_url = 'http://127.0.0.1:8000'
+    else:
+        base_url = sys.argv[1]
+    populate_countries(base_url)
+    populate_counties(base_url)
+    populate_cities(base_url)
 
