@@ -16,7 +16,7 @@ venv/Scripts/activate  # windows
 Install the needed dependencies:
 
 ```bash
-pip install requirement.txt
+pip install -r requirement.txt
 ```
 
 # Running

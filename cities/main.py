@@ -1,6 +1,6 @@
 from re import I
 from typing import Optional, List, Dict
-from fastapi import Depends, FastAPI, HTTPException, Request
+from fastapi import Depends, FastAPI, HTTPException, Request, Response
 from sqlalchemy.orm import Session
 
 from . import crud, models, schemas
@@ -68,8 +68,11 @@ def create_country(country: schemas.CountryCreate, db: Session = Depends(get_db)
     if db_country:
         raise HTTPException(status_code=400, detail="Country already exists.")
     else:
+        if country.id:
+            country_id = country.id
+        else:
+            country_id = None
         return crud.create_country(db=db, country=country, country_id=country.id)
-
 
 
 @app.put("/countries/{country_id}", response_model=schemas.Country)
@@ -82,6 +85,11 @@ def create_or_update_country(
         return crud.update_country(db=db, country_id=country_id, country=country)
     else:
         return crud.create_country(db=db, country_id=country_id, country=country)
+
+
+# @app.options("/countries")
+# async def preflight_handler(request: Request) -> Response:
+#    return Response()
 
 
 ## ----- counties ------
@@ -219,15 +227,16 @@ def get_city_by_id(request: Request, city_id: int, db: Session = Depends(get_db)
         county=schemas.County(
             id=db_city.county.id,
             name=db_city.county.name,
-            link=request.url_for('get_county_by_id', county_id=db_city.county.id)
-            ),
-        country = schemas.Country(
+            link=request.url_for("get_county_by_id", county_id=db_city.county.id),
+        ),
+        country=schemas.Country(
             id=db_city.county.country.id,
             name=db_city.county.country.name,
-            link=request.url_for("get_country_by_id", country_id=db_city.county.country.id)
-        )
+            link=request.url_for(
+                "get_country_by_id", country_id=db_city.county.country.id
+            ),
+        ),
     )
-    
 
 
 @app.post("/cities", response_model=schemas.City)

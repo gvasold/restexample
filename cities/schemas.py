@@ -11,7 +11,7 @@ class CountryBase(BaseModel):
 class CountryCreate(CountryBase):
     "Request body for creation of a Country."
     id: Union[int, None] = None
-    
+    # pass
 
 
 class Country(CountryBase):
@@ -22,18 +22,21 @@ class Country(CountryBase):
     class Config:
         orm_mode = True
 
+
 class CountyBase(BaseModel):
     name: str
+
 
 class County(CountyBase):
     id: int
     name: str
-#    country_id: Union[int, None]
+    #    country_id: Union[int, None]
     link: Union[str, None] = Field(description="Link to county details.")
 
+
 class CountryDetails(CountryBase):
-    id: str
-    counties: List = []#[]#County]
+    id: int
+    counties: List[County] = []
 
 
 class CountyCreate(CountyBase):
@@ -41,8 +44,11 @@ class CountyCreate(CountyBase):
     name: str
     country_id: int
 
+
 class CityBase(BaseModel):
     name: str
+
+
 #    population: int
 #    county_id: int
 
@@ -54,6 +60,7 @@ class City(CityBase):
     class Config:
         orm_mode = True
 
+
 class CountyDetails(CountyBase):
     id: int
     name: str
@@ -63,8 +70,9 @@ class CountyDetails(CountyBase):
     class Config:
         orm_mode = True
 
+
 class CityCreate(CityBase):
-    id: int = None
+    # id: int = None
     name: str
     population: int
     county_id: int
@@ -78,5 +86,3 @@ class CityDetails(CityBase):
 
     class Config:
         orm_mode = True
-
-        

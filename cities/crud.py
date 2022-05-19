@@ -16,7 +16,14 @@ def get_countries(db: Session, skip: int = 0, limit: int = 100, q=None):
     conditions = []
     if q:
         conditions.append(Country.name.ilike(f"%{q}%"))
-    return db.query(Country).filter(*conditions).order_by(Country.name).offset(skip).limit(limit).all()
+    return (
+        db.query(Country)
+        .filter(*conditions)
+        .order_by(Country.name)
+        .offset(skip)
+        .limit(limit)
+        .all()
+    )
 
 
 def get_country_by_name(db: Session, country_name: str):
@@ -24,7 +31,7 @@ def get_country_by_name(db: Session, country_name: str):
     return db.query(Country).filter(Country.name == country_name).first()
 
 
-def create_country(db: Session, country: schemas.CountyCreate, country_id: int=None):  
+def create_country(db: Session, country: schemas.CountyCreate, country_id: int = None):
     """Add a new Country.
 
     if country_id is None, database will create the id automatcally.
@@ -57,20 +64,27 @@ def get_counties(db: Session, skip: int = 0, limit: int = 100, q=None, country=N
     "Get a list of countries."
     conditions = []
     if q:
-        conditions.append(County.name.ilike(f"%{q}%")) 
+        conditions.append(County.name.ilike(f"%{q}%"))
     if country:
         conditions.append(Country.name == country)
-    return db.query(County).join(Country).filter(*conditions).\
-        order_by(County.name).offset(skip).limit(limit).all()
+    return (
+        db.query(County)
+        .join(Country)
+        .filter(*conditions)
+        .order_by(County.name)
+        .offset(skip)
+        .limit(limit)
+        .all()
+    )
 
 
 def get_county_by_name(db: Session, county_name: str):
     return db.query(County).filter(County.name == county_name).first()
 
 
-def create_county(db: Session, county_id: int, county: schemas.CountyCreate):
+def create_county(db: Session, county: schemas.CountyCreate, county_id=None):
     "Create a new county."
-    db_county = County(name=county.name, country_id=county.country_id, id=county.id)
+    db_county = County(name=county.name, country_id=county.country_id, id=county_id)
     db.add(db_county)
     db.commit()
     db.refresh(db_county)
@@ -99,11 +113,11 @@ def get_cities(
     db: Session,
     skip: int = 0,
     limit: int = 100,
-    q:str = None,
+    q: str = None,
     minpop: int = None,
     maxpop: int = None,
     county: int = None,
-    country:int = None,
+    country: int = None,
 ):
     """Get a list of cities.
 
@@ -119,7 +133,7 @@ def get_cities(
     """
     conditions = []
     if q:
-        conditions.append(City.name.ilike(f"%{q}%")) 
+        conditions.append(City.name.ilike(f"%{q}%"))
     if minpop:
         conditions.append(City.population >= minpop)
     if maxpop:
@@ -128,8 +142,16 @@ def get_cities(
         conditions.append(County.name == county)
     if country:
         conditions.append(Country.name == country)
-    return db.query(City).join(County).join(Country).order_by(City.name).\
-        filter(*conditions).offset(skip).limit(limit).all()
+    return (
+        db.query(City)
+        .join(County)
+        .join(Country)
+        .order_by(City.name)
+        .filter(*conditions)
+        .offset(skip)
+        .limit(limit)
+        .all()
+    )
 
 
 def get_city_by_name(db: Session, city_name: str):
@@ -137,11 +159,16 @@ def get_city_by_name(db: Session, city_name: str):
     return db.query(City).filter(City.name == city_name).first()
 
 
+# name="bar", population=999, county_id=1, city_id=1000)
+
+
 def create_city(db: Session, city: schemas.CityCreate, city_id=None):
     "Create a new City. Id will be chosen by data base if None."
+    print("===>", city_id)
     db_city = City(
-        name=city.name, population=city.population, county_id=city.county_id, id=city.id
+        name=city.name, population=city.population, county_id=city.county_id, id=city_id
     )
+    print(db_city.id)
     db.add(db_city)
     db.commit()
     db.refresh(db_city)
