@@ -12,6 +12,7 @@ app = FastAPI()
 
 
 def get_db():
+    "Function used for dependency injection of db connection."
     db = SessionLocal()
     try:
         yield db
@@ -24,6 +25,7 @@ def get_db():
 
 @app.options("/countries", status_code=204, response_class=Response)
 async def options_countries(response: Response):
+    "Handle OPTIONS request for /countries."
     response.headers["Allow"] = "GET, HEAD, OPTIONS, POST"
     response.status_code = 204
     return response
@@ -47,7 +49,7 @@ async def get_countries(
 
 @app.head("/countries/{country_id}")
 @app.get("/countries/{country_id}", response_model=schemas.CountryDetails)
-def get_country_by_id(request: Request, country_id: int, db: Session = Depends(get_db)):
+async def get_country_by_id(request: Request, country_id: int, db: Session = Depends(get_db)):
     "Get a single Country with id `country_id`."
     db_country = crud.get_country(db=db, country_id=country_id)
     if not db_country:
@@ -59,13 +61,14 @@ def get_country_by_id(request: Request, country_id: int, db: Session = Depends(g
 
 @app.options("/countries/{country_id}", status_code=204, response_class=Response)
 async def options_countries_with_id(country_id: int, response: Response):
+    "Handle OPTIONS request for /countries/{country_id}."
     response.headers["Allow"] = "GET, HEAD, OPTIONS, PUT"
     response.status_code = 204
     return response
 
 
 @app.post("/countries", response_model=schemas.CountryDetails, status_code=201)
-def create_country(
+async def create_country(
     request: Request, country: schemas.CountryCreate, db: Session = Depends(get_db)
 ):
     "Create a new Country."
@@ -86,7 +89,7 @@ def create_country(
 
 
 @app.put("/countries/{country_id}", response_model=schemas.CountryDetails)
-def create_or_update_country(
+async def create_or_update_country(
     response: Response,
     request: Request,
     country_id: int,
@@ -109,6 +112,7 @@ def create_or_update_country(
 
 @app.options("/counties", status_code=204, response_class=Response)
 async def options_countries(response: Response):
+    "Handle OPTIONS request for /counties."
     response.headers["Allow"] = "GET, HEAD, OPTIONS, POST"
     response.status_code = 204
     return response
@@ -135,7 +139,7 @@ async def get_counties(
 
 @app.head("/counties/{county_id}")
 @app.get("/counties/{county_id}", response_model=schemas.CountyDetails)
-def get_county_by_id(request: Request, county_id: int, db: Session = Depends(get_db)):
+async def get_county_by_id(request: Request, county_id: int, db: Session = Depends(get_db)):
     "Get County with id `county_id`."
     db_county = crud.get_county(db=db, county_id=county_id)
     if not db_county:
@@ -145,13 +149,14 @@ def get_county_by_id(request: Request, county_id: int, db: Session = Depends(get
 
 @app.options("/counties/{county_id}", status_code=204, response_class=Response)
 async def options_counties_with_id(county_id: int, response: Response):
+    "Handle OPTIONS request for /counties/{counties_id}"
     response.headers["Allow"] = "GET, HEAD, OPTIONS, PUT"
     response.status_code = 204
     return response
 
 
 @app.post("/counties", response_model=schemas.CountyDetails, status_code=201)
-def create_county(
+async def create_county(
     request: Request, county: schemas.CountyCreate, db: Session = Depends(get_db)
 ):
     "Create a new County."
@@ -167,7 +172,7 @@ def create_county(
 
 
 @app.put("/counties/{county_id}", response_model=schemas.CountyDetails)
-def create_or_update_county(
+async def create_or_update_county(
     request: Request,
     response: Response,
     county_id: int,
@@ -193,6 +198,7 @@ def create_or_update_county(
 
 @app.options("/cities", status_code=204, response_class=Response)
 async def options_cities(response: Response):
+    "Handle OPTIONS request for /cities."
     response.headers["Allow"] = "GET, HEAD, OPTIONS, POST"
     response.status_code = 204
     return response
@@ -229,7 +235,7 @@ async def get_cities(
 
 @app.head("/cities/{city_id}")
 @app.get("/cities/{city_id}", response_model=schemas.CityDetails)
-def get_city_by_id(request: Request, city_id: int, db: Session = Depends(get_db)):
+async def get_city_by_id(request: Request, city_id: int, db: Session = Depends(get_db)):
     "Get City with id `city_id`."
     db_city = crud.get_city(db=db, city_id=city_id)
     if not db_city:
@@ -238,7 +244,7 @@ def get_city_by_id(request: Request, city_id: int, db: Session = Depends(get_db)
 
 
 @app.post("/cities", response_model=schemas.CityDetails, status_code=201)
-def create_city(
+async def create_city(
     request: Request, city: schemas.CityCreate, db: Session = Depends(get_db)
 ):
     "Create a new City."
@@ -254,7 +260,7 @@ def create_city(
 
 
 @app.put("/cities/{city_id}", response_model=schemas.CityDetails)
-def create_or_update_city(
+async def create_or_update_city(
     request: Request,
     response: Response,
     city_id: int,
@@ -276,7 +282,7 @@ def create_or_update_city(
 
 
 @app.delete("/cities/{city_id}", response_model=schemas.CityDetails)
-def delete_city(request: Request, city_id: int, db: Session = Depends(get_db)):
+async def delete_city(request: Request, city_id: int, db: Session = Depends(get_db)):
     "Delete a City."
     db_city = crud.get_city(db, city_id=city_id)
     if db_city:
@@ -292,6 +298,7 @@ def delete_city(request: Request, city_id: int, db: Session = Depends(get_db)):
 
 @app.options("/cities/{city_id}", status_code=204, response_class=Response)
 async def options_cities_with_id(city_id: int, response: Response):
+    "Handle OPTIONS request for /cities/{city_id}"
     response.headers["Allow"] = "DELETE, GET, HEAD, OPTIONS, PUT"
     response.status_code = 204
     return response
