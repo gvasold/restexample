@@ -41,8 +41,7 @@ async def get_countries(
     "Get an ordered list of countries."
     countries = []
     for country in crud.get_countries(db=db, skip=start, limit=size, q=q):
-        country.link = request.url_for("get_country_by_id", country_id=country.id)
-        countries.append(country)
+        countries.append(schemas.Country.from_model(request, country))
     return countries
 
 
@@ -54,16 +53,7 @@ def get_country_by_id(request: Request, country_id: int, db: Session = Depends(g
     if not db_country:
         raise HTTPException(status_code=404, detail="Country does not exist.")
     else:
-        country = schemas.CountryDetails(id=db_country.id, name=db_country.name)
-        for county in db_country.counties:
-            country.counties.append(
-                schemas.County(
-                    id=county.id,
-                    name=county.name,
-                    country_id=county.country_id,
-                    link=request.url_for("get_county_by_id", county_id=county.id),
-                )
-            )
+        country = schemas.CountryDetails.from_model(request, db_country)
     return country
 
 
@@ -72,27 +62,6 @@ async def options_countries_with_id(country_id: int, response: Response):
     response.headers["Allow"] = "GET, HEAD, OPTIONS, PUT"
     response.status_code = 204
     return response
-
-
-def convert_country_to_countrydetails(
-    request: Request, db_country: models.Country
-) -> schemas.CountryDetails:
-    "Return a schema.CountryDetails object derived from models.Country."
-    country = schemas.CountryDetails(
-        id=db_country.id,
-        name=db_country.name,
-        link=request.url_for("get_country_by_id", country_id=db_country.id),
-    )
-    for county in db_country.counties:
-        country.counties.append(
-            schemas.County(
-                id=county.id,
-                name=county.name,
-                # country_id=county.country_id,
-                link=request.url_for("get_county_by_id", county_id=county.id),
-            )
-        )
-    return country
 
 
 @app.post("/countries", response_model=schemas.CountryDetails, status_code=201)
@@ -108,7 +77,7 @@ def create_country(
             db_country = crud.create_country(
                 db=db, country=country, country_id=country.id
             )
-            return convert_country_to_countrydetails(request, db_country)
+            return schemas.CountryDetails.from_model(request, db_country)
         except sqlalchemy.exc.IntegrityError:
             raise HTTPException(
                 status_code=400,
@@ -132,7 +101,7 @@ def create_or_update_country(
     else:
         db_country = crud.create_country(db=db, country_id=country_id, country=country)
         response.status_code = 201
-    return convert_country_to_countrydetails(request, db_country)
+    return schemas.CountryDetails.from_model(request, db_country)
 
 
 ## ----- counties ------
@@ -160,42 +129,18 @@ async def get_counties(
     for db_county in crud.get_counties(
         db=db, skip=start, limit=size, q=q, country=country
     ):
-        counties.append(
-            schemas.County(
-                id=db_county.id,
-                name=db_county.name,
-                country_id=db_county.country_id,
-                link=request.url_for("get_county_by_id", county_id=db_county.id),
-            )
-        )
+        counties.append(schemas.County.from_model(request, db_county))
     return counties
 
 
 @app.head("/counties/{county_id}")
-@app.get("/counties/{county_id}")
+@app.get("/counties/{county_id}", response_model=schemas.CountyDetails)
 def get_county_by_id(request: Request, county_id: int, db: Session = Depends(get_db)):
     "Get County with id `county_id`."
     db_county = crud.get_county(db=db, county_id=county_id)
     if not db_county:
         raise HTTPException(status_code=404, detail="County does not exist.")
-    country = schemas.Country(
-        id=db_county.country.id,
-        name=db_county.country.name,
-        link=request.url_for("get_country_by_id", country_id=db_county.country_id),
-    )
-    county = schemas.CountyDetails(
-        id=db_county.id, name=db_county.name, country=country
-    )
-    for db_city in db_county.cities:
-        county.cities.append(
-            schemas.City(
-                id=db_city.id,
-                name=db_city.name,
-                link=request.url_for("get_city_by_id", city_id=db_city.id),
-                county_id=db_city.county_id,
-            )
-        )
-    return county
+    return schemas.CountyDetails.from_model(request, db_county)
 
 
 @app.options("/counties/{county_id}", status_code=204, response_class=Response)
@@ -216,7 +161,7 @@ def create_county(
     else:
         try:
             db_county = crud.create_county(db=db, county=county, county_id=county.id)
-            return convert_county_to_countydetails(request, db_county)
+            return schemas.CountyDetails.from_model(request, db_county)
         except sqlalchemy.exc.IntegrityError as err:
             raise HTTPException(status_code=400, detail=f"{err}")
 
@@ -238,10 +183,9 @@ def create_or_update_county(
         else:
             db_county = crud.create_county(db=db, county_id=county_id, county=county)
             response.status_code = 201
-        return convert_county_to_countydetails(request, db_county)
+        return schemas.CountyDetails.from_model(request, db_county)
     except sqlalchemy.exc.IntegrityError as err:
         raise HTTPException(status_code=400, detail=f"{err}")
-
 
 
 ## ----- Cities -----
@@ -279,15 +223,7 @@ async def get_cities(
         county=county,
         country=country,
     ):
-        cities.append(
-            schemas.City(
-                id=db_city.id,
-                name=db_city.name,
-                population=db_city.population,
-                county_id=db_city.county_id,
-                link=request.url_for("get_city_by_id", city_id=db_city.id),
-            )
-        )
+        cities.append(schemas.City.from_model(request, db_city))
     return cities
 
 
@@ -298,56 +234,7 @@ def get_city_by_id(request: Request, city_id: int, db: Session = Depends(get_db)
     db_city = crud.get_city(db=db, city_id=city_id)
     if not db_city:
         raise HTTPException(status_code=404, detail="City does not exist.")
-    return convert_city_to_citydetails(request, db_city)
-
-
-def convert_city_to_citydetails(
-    request: Request, db_city: models.City
-) -> schemas.CityDetails:
-    "Return a schemas.CityDetails object derived from db_city."
-    return schemas.CityDetails(
-        id=db_city.id,
-        name=db_city.name,
-        population=db_city.population,
-        link=request.url_for("get_city_by_id", city_id=db_city.id),
-        county=schemas.County(
-            id=db_city.county.id,
-            name=db_city.county.name,
-            link=request.url_for("get_county_by_id", county_id=db_city.county.id),
-        ),
-        country=schemas.Country(
-            id=db_city.county.country.id,
-            name=db_city.county.country.name,
-            link=request.url_for(
-                "get_country_by_id", country_id=db_city.county.country.id
-            ),
-        ),
-    )
-
-
-def convert_county_to_countydetails(
-    request: Request, db_county: models.County
-) -> schemas.CountyDetails:
-    "Return a schemas.CountyDetails object derived from db_county."
-    county = schemas.CountyDetails(
-        id=db_county.id,
-        name=db_county.name,
-        link=request.url_for("get_county_by_id", county_id=db_county.id),
-    )
-    county.country = schemas.Country(
-        id=db_county.country.id,
-        name=db_county.country.name,
-        link=request.url_for("get_country_by_id", country_id=db_county.country.id),
-    )
-    for city in db_county.cities:
-        county.cities.append(
-            schemas.City(
-                id=city.id,
-                name=city.name,
-                link=request.url_for("get_city_by_id", city_id=city.id),
-            )
-        )
-    return county
+    return schemas.CityDetails.from_model(request, db_city)
 
 
 @app.post("/cities", response_model=schemas.CityDetails, status_code=201)
@@ -361,7 +248,7 @@ def create_city(
     else:
         try:
             db_city = crud.create_city(db=db, city=city, city_id=city.id)
-            return convert_city_to_citydetails(request, db_city)
+            return schemas.CityDetails.from_model(request, db_city)
         except sqlalchemy.exc.IntegrityError as err:
             raise HTTPException(status_code=400, detail=f"{err}")
 
@@ -383,10 +270,9 @@ def create_or_update_city(
         else:
             db_city = crud.create_city(db=db, city_id=city_id, city=city)
             response.status_code = 201
-        return convert_city_to_citydetails(request, db_city)
+        return schemas.CityDetails.from_model(request, db_city)
     except sqlalchemy.exc.IntegrityError as err:
         raise HTTPException(status_code=400, detail=f"{err}")
-    
 
 
 @app.delete("/cities/{city_id}", response_model=schemas.CityDetails)
@@ -396,7 +282,7 @@ def delete_city(request: Request, city_id: int, db: Session = Depends(get_db)):
     if db_city:
         # We create the response before actually deleting because
         # we need the SQLAlchemy references to County (which is gone after deletion)
-        response_data = convert_city_to_citydetails(request, db_city)
+        response_data = schemas.CityDetails.from_model(request, db_city)
         response_data.link = None  # Nothing left to link to
         crud.delete_city(db, city_id)
         return response_data
