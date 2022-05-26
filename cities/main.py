@@ -81,7 +81,7 @@ async def create_country(
                 db=db, country=country, country_id=country.id
             )
             return schemas.CountryDetails.from_model(request, db_country)
-        except sqlalchemy.exc.IntegrityError:
+        except (sqlalchemy.exc.IntegrityError, crud.CreationException):
             raise HTTPException(
                 status_code=400,
                 detail=f"Country with id '{country.id}' already exists.",
@@ -99,6 +99,9 @@ async def create_or_update_country(
     "Create a new or update an existing country."
     db_country = crud.get_country(db, country_id=country_id)
     if db_country:
+        # `id` is ignored anyhow, but I think it's more clear to raise a 400
+        if country.id and country.id != country_id:
+            raise HTTPException(status_code=400, detail="Changing the id of a Country is not allowed")
         db_country = crud.update_country(db=db, country_id=country_id, country=country)
         response.status_code = 200
     else:
@@ -167,7 +170,7 @@ async def create_county(
         try:
             db_county = crud.create_county(db=db, county=county, county_id=county.id)
             return schemas.CountyDetails.from_model(request, db_county)
-        except sqlalchemy.exc.IntegrityError as err:
+        except ((sqlalchemy.exc.IntegrityError, crud.CreationException)) as err:
             raise HTTPException(status_code=400, detail=f"{err}")
 
 
@@ -183,6 +186,9 @@ async def create_or_update_county(
     db_county = crud.get_county(db, county_id=county_id)
     try:
         if db_county:
+            # `id` is ignored anyhow, but I think it's more clear to raise a 400
+            if county.id and county.id != county_id:
+                raise HTTPException(status_code=400, detail="Changing the id of a County is not allowed")
             db_county = crud.update_county(db=db, county_id=county_id, county=county)
             response.status_code = 200
         else:
@@ -255,7 +261,7 @@ async def create_city(
         try:
             db_city = crud.create_city(db=db, city=city, city_id=city.id)
             return schemas.CityDetails.from_model(request, db_city)
-        except sqlalchemy.exc.IntegrityError as err:
+        except (sqlalchemy.exc.IntegrityError, crud.CreationException) as err:
             raise HTTPException(status_code=400, detail=f"{err}")
 
 
@@ -271,6 +277,8 @@ async def create_or_update_city(
     db_city = crud.get_city(db, city_id=city_id)
     try:
         if db_city:
+            if city.id and city.id != city_id:
+                raise HTTPException(status_code=400, detail="Changing the id of a City is not allowed")
             db_city = crud.update_city(db=db, city_id=city_id, city=city)
             response.status_code = 200
         else:

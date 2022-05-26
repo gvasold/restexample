@@ -59,7 +59,7 @@ def test_create_country_with_id(db, countries):
     assert country.id == 1000
 
     # using an existing id must fail
-    with pytest.raises(sqlalchemy.exc.IntegrityError):
+    with pytest.raises((crud.CreationException, sqlalchemy.exc.IntegrityError)):
         crud.create_country(db, CountryCreate(name="bar", id=1000))
 
 

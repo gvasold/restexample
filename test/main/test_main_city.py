@@ -158,6 +158,12 @@ def test_put_update(client, cities):
     assert response.json()["country"]["link"] == "http://testserver/countries/1"
 
 
+def test_put_update_new_id_must_fail(client, cities):
+    "Updates must not replace the id."
+    response = client.put("/cities/1", json={"id": 9999, "name": "BarFoo", "population": 77, "county_id": 1})
+    assert response.status_code == 400
+
+
 def test_put_update_fail(client, cities):
     "Updating an existing city with a non existing county_id must fail."
     response = client.put(

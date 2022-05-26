@@ -61,14 +61,14 @@ def test_create_county(db, counties):
 def test_create_county_with_id(db, counties):
     "Add a new county with explicit id."
     county = crud.create_county(
-        db, CountyCreate(name="bar", country_id=1, id=100), county_id=1000
+        db, CountyCreate(name="bar", country_id=1), county_id=9876
     )
     assert county.name == "bar"
-    assert county.id == 1000
+    assert county.id == 9876
 
     # using an existing id must fail
-    with pytest.raises(sqlalchemy.exc.IntegrityError):
-        crud.create_county(db, CountyCreate(name="bar", country_id=1), county_id=1000)
+    with pytest.raises(crud.CreationException):
+        crud.create_county(db, CountyCreate(name="bar", country_id=1), county_id=9876)
 
 
 def test_update_county(db, counties):

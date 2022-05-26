@@ -3,6 +3,8 @@ from sqlalchemy.orm import Session
 from . import schemas
 from .models import Country, County, City
 
+class CreationException(Exception):
+    pass
 ## ----- Countries
 
 
@@ -36,6 +38,10 @@ def create_country(db: Session, country: schemas.CountyCreate, country_id: int =
 
     if country_id is None, database will create the id automatcally.
     """
+    # This is handled by the database anyhow, but we want a nicer error message
+    # and avoid a warning from sqlalchemy
+    if country_id and get_country(db, country_id):
+        raise CreationException(f"A country with id '{country_id}' already exists.")
     db_country = Country(name=country.name, id=country_id)
     db.add(db_country)
     db.commit()
@@ -84,7 +90,11 @@ def get_county_by_name(db: Session, county_name: str):
 
 def create_county(db: Session, county: schemas.CountyCreate, county_id=None):
     "Create a new county."
-    db_county = County(name=county.name, country_id=county.country_id, id=county_id)
+    # This is handled by the database anyhow, but we want a nicer error message
+    # and avoid a warning from sqlalchemy
+    if county_id and get_county(db, county_id):
+        raise CreationException(f"A county with id '{county_id}' already exists.")
+    db_county = County(id=county_id, name=county.name, country_id=county.country_id)
     db.add(db_county)
     db.commit()
     db.refresh(db_county)
@@ -164,6 +174,10 @@ def get_city_by_name(db: Session, city_name: str):
 
 def create_city(db: Session, city: schemas.CityCreate, city_id=None):
     "Create a new City. Id will be chosen by data base if None."
+    # This is handled by the database anyhow, but we want a nicer error message
+    # and avoid a warning from sqlalchemy
+    if city_id and get_city(db, city_id):
+        raise CreationException(f"A country with id '{city_id}' already exists.")
     db_city = City(
         name=city.name, population=city.population, county_id=city.county_id, id=city_id
     )

@@ -99,17 +99,17 @@ def test_create_city(db, cities):
 def test_create_city_with_id(db, counties):
     "Add a new county with explicit id."
     city = crud.create_city(
-        db, CityCreate(name="bar", county_id=1, population=999, id=100), city_id=1000
+        db, CityCreate(name="bar", county_id=1, population=999, id=100), city_id=9876
     )
     assert city.name == "bar"
-    assert city.id == 1000
+    assert city.id == 9876
     assert city.population == 999
     assert city.county_id == 1
 
     # using an existing id must fail
-    with pytest.raises(sqlalchemy.exc.IntegrityError):
+    with pytest.raises((crud.CreationException, sqlalchemy.exc.IntegrityError)):
         crud.create_city(
-            db, CityCreate(name="bar", population=999, county_id=1), city_id=1000
+            db, CityCreate(name="bar", population=999, county_id=1), city_id=9876
         )
 
 
