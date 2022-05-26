@@ -164,11 +164,9 @@ def get_city_by_name(db: Session, city_name: str):
 
 def create_city(db: Session, city: schemas.CityCreate, city_id=None):
     "Create a new City. Id will be chosen by data base if None."
-    print("===>", city_id)
     db_city = City(
         name=city.name, population=city.population, county_id=city.county_id, id=city_id
     )
-    print(db_city.id)
     db.add(db_city)
     db.commit()
     db.refresh(db_city)

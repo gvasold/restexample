@@ -29,13 +29,14 @@ class CountyBase(BaseModel):
 
 class County(CountyBase):
     id: int
-    name: str
+    # name: str
     #    country_id: Union[int, None]
     link: Union[str, None] = Field(description="Link to county details.")
 
 
 class CountryDetails(CountryBase):
     id: int
+    link: Union[str, None] = Field(description="Link to country details.")
     counties: List[County] = []
 
 
@@ -64,7 +65,8 @@ class City(CityBase):
 class CountyDetails(CountyBase):
     id: int
     name: str
-    country: Country
+    link: Union[str, None] = Field(description="Link to county details.")
+    country: Union[Country, None]
     cities: List[City] = []
 
     class Config:
@@ -72,7 +74,7 @@ class CountyDetails(CountyBase):
 
 
 class CityCreate(CityBase):
-    # id: int = None
+    id: Union[int, None] = None
     name: str
     population: int
     county_id: int
@@ -81,6 +83,7 @@ class CityCreate(CityBase):
 class CityDetails(CityBase):
     id: int
     population: int
+    link: Union[str, None] = Field(description="Link to city details.")
     county: County
     country: Country
 

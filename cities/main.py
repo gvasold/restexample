@@ -2,7 +2,7 @@ from re import I
 from typing import Optional, List, Dict
 from fastapi import Depends, FastAPI, HTTPException, Request, Response
 from sqlalchemy.orm import Session
-
+import sqlalchemy.exc
 from . import crud, models, schemas
 from .database import SessionLocal, engine
 
@@ -20,6 +20,13 @@ def get_db():
 
 
 ## ---- countries -----
+
+
+@app.options("/countries", status_code=204, response_class=Response)
+async def options_countries(response: Response):
+    response.headers["Allow"] = "GET, HEAD, OPTIONS, POST"
+    response.status_code = 204
+    return response
 
 
 @app.head("/countries")
@@ -60,39 +67,82 @@ def get_country_by_id(request: Request, country_id: int, db: Session = Depends(g
     return country
 
 
-# TODO: Which Exeptions must be handled? eg sqlalchemy.exc.IntegrityError for recycled ids?
-@app.post("/countries", response_model=schemas.Country, status_code=201)
-def create_country(country: schemas.CountryCreate, db: Session = Depends(get_db)):
+@app.options("/countries/{country_id}", status_code=204, response_class=Response)
+async def options_countries_with_id(country_id: int, response: Response):
+    response.headers["Allow"] = "GET, HEAD, OPTIONS, PUT"
+    response.status_code = 204
+    return response
+
+
+def convert_country_to_countrydetails(
+    request: Request, db_country: models.Country
+) -> schemas.CountryDetails:
+    "Return a schema.CountryDetails object derived from models.Country."
+    country = schemas.CountryDetails(
+        id=db_country.id,
+        name=db_country.name,
+        link=request.url_for("get_country_by_id", country_id=db_country.id),
+    )
+    for county in db_country.counties:
+        country.counties.append(
+            schemas.County(
+                id=county.id,
+                name=county.name,
+                # country_id=county.country_id,
+                link=request.url_for("get_county_by_id", county_id=county.id),
+            )
+        )
+    return country
+
+
+@app.post("/countries", response_model=schemas.CountryDetails, status_code=201)
+def create_country(
+    request: Request, country: schemas.CountryCreate, db: Session = Depends(get_db)
+):
     "Create a new Country."
     db_country = crud.get_country_by_name(db, country.name)
     if db_country:
         raise HTTPException(status_code=400, detail="Country already exists.")
     else:
-        if country.id:
-            country_id = country.id
-        else:
-            country_id = None
-        return crud.create_country(db=db, country=country, country_id=country.id)
+        try:
+            db_country = crud.create_country(
+                db=db, country=country, country_id=country.id
+            )
+            return convert_country_to_countrydetails(request, db_country)
+        except sqlalchemy.exc.IntegrityError:
+            raise HTTPException(
+                status_code=400,
+                detail=f"Country with id '{country.id}' already exists.",
+            )
 
 
-@app.put("/countries/{country_id}", response_model=schemas.Country)
+@app.put("/countries/{country_id}", response_model=schemas.CountryDetails)
 def create_or_update_country(
-    country_id: int, country: schemas.CountryCreate, db: Session = Depends(get_db)
+    response: Response,
+    request: Request,
+    country_id: int,
+    country: schemas.CountryCreate,
+    db: Session = Depends(get_db),
 ):
     "Create a new or update an existing country."
     db_country = crud.get_country(db, country_id=country_id)
     if db_country:
-        return crud.update_country(db=db, country_id=country_id, country=country)
+        db_country = crud.update_country(db=db, country_id=country_id, country=country)
+        response.status_code = 200
     else:
-        return crud.create_country(db=db, country_id=country_id, country=country)
-
-
-# @app.options("/countries")
-# async def preflight_handler(request: Request) -> Response:
-#    return Response()
+        db_country = crud.create_country(db=db, country_id=country_id, country=country)
+        response.status_code = 201
+    return convert_country_to_countrydetails(request, db_country)
 
 
 ## ----- counties ------
+
+
+@app.options("/counties", status_code=204, response_class=Response)
+async def options_countries(response: Response):
+    response.headers["Allow"] = "GET, HEAD, OPTIONS, POST"
+    response.status_code = 204
+    return response
 
 
 @app.head("/counties")
@@ -148,32 +198,60 @@ def get_county_by_id(request: Request, county_id: int, db: Session = Depends(get
     return county
 
 
-@app.post("/counties", response_model=schemas.County)
-def create_county(county: schemas.CountyCreate, db: Session = Depends(get_db)):
+@app.options("/counties/{county_id}", status_code=204, response_class=Response)
+async def options_counties_with_id(county_id: int, response: Response):
+    response.headers["Allow"] = "GET, HEAD, OPTIONS, PUT"
+    response.status_code = 204
+    return response
+
+
+@app.post("/counties", response_model=schemas.CountyDetails, status_code=201)
+def create_county(
+    request: Request, county: schemas.CountyCreate, db: Session = Depends(get_db)
+):
     "Create a new County."
     db_county = crud.get_county_by_name(db, county.name)
     if db_county:
         raise HTTPException(status_code=400, detail="County already exists.")
     else:
-        return crud.create_county(db=db, county=county)
+        try:
+            db_county = crud.create_county(db=db, county=county, county_id=county.id)
+            return convert_county_to_countydetails(request, db_county)
+        except sqlalchemy.exc.IntegrityError as err:
+            raise HTTPException(status_code=400, detail=f"{err}")
 
 
-@app.put("/counties/{county_id}", response_model=schemas.County)
+@app.put("/counties/{county_id}", response_model=schemas.CountyDetails)
 def create_or_update_county(
-    county_id: int, county: schemas.CountyCreate, db: Session = Depends(get_db)
+    request: Request,
+    response: Response,
+    county_id: int,
+    county: schemas.CountyCreate,
+    db: Session = Depends(get_db),
 ):
     "Create a new or update an existing County."
     db_county = crud.get_county(db, county_id=county_id)
-    if db_county:
-        db_county = crud.update_county(db=db, county_id=county_id, county=county)
-    else:
-        db_county = crud.create_county(db=db, county_id=county_id, county=county)
-    return schemas.County(
-        id=db_county.id, name=db_county.name, country_id=db_county.country_id
-    )
+    try:
+        if db_county:
+            db_county = crud.update_county(db=db, county_id=county_id, county=county)
+            response.status_code = 200
+        else:
+            db_county = crud.create_county(db=db, county_id=county_id, county=county)
+            response.status_code = 201
+        return convert_county_to_countydetails(request, db_county)
+    except sqlalchemy.exc.IntegrityError as err:
+        raise HTTPException(status_code=400, detail=f"{err}")
+
 
 
 ## ----- Cities -----
+
+
+@app.options("/cities", status_code=204, response_class=Response)
+async def options_cities(response: Response):
+    response.headers["Allow"] = "GET, HEAD, OPTIONS, POST"
+    response.status_code = 204
+    return response
 
 
 @app.head("/cities")
@@ -220,10 +298,18 @@ def get_city_by_id(request: Request, city_id: int, db: Session = Depends(get_db)
     db_city = crud.get_city(db=db, city_id=city_id)
     if not db_city:
         raise HTTPException(status_code=404, detail="City does not exist.")
+    return convert_city_to_citydetails(request, db_city)
+
+
+def convert_city_to_citydetails(
+    request: Request, db_city: models.City
+) -> schemas.CityDetails:
+    "Return a schemas.CityDetails object derived from db_city."
     return schemas.CityDetails(
         id=db_city.id,
         name=db_city.name,
         population=db_city.population,
+        link=request.url_for("get_city_by_id", city_id=db_city.id),
         county=schemas.County(
             id=db_city.county.id,
             name=db_city.county.name,
@@ -239,33 +325,87 @@ def get_city_by_id(request: Request, city_id: int, db: Session = Depends(get_db)
     )
 
 
-@app.post("/cities", response_model=schemas.City)
-def create_city(city: schemas.CityCreate, db: Session = Depends(get_db)):
+def convert_county_to_countydetails(
+    request: Request, db_county: models.County
+) -> schemas.CountyDetails:
+    "Return a schemas.CountyDetails object derived from db_county."
+    county = schemas.CountyDetails(
+        id=db_county.id,
+        name=db_county.name,
+        link=request.url_for("get_county_by_id", county_id=db_county.id),
+    )
+    county.country = schemas.Country(
+        id=db_county.country.id,
+        name=db_county.country.name,
+        link=request.url_for("get_country_by_id", country_id=db_county.country.id),
+    )
+    for city in db_county.cities:
+        county.cities.append(
+            schemas.City(
+                id=city.id,
+                name=city.name,
+                link=request.url_for("get_city_by_id", city_id=city.id),
+            )
+        )
+    return county
+
+
+@app.post("/cities", response_model=schemas.CityDetails, status_code=201)
+def create_city(
+    request: Request, city: schemas.CityCreate, db: Session = Depends(get_db)
+):
     "Create a new City."
     db_city = crud.get_city_by_name(db, city.name)
     if db_city:
         raise HTTPException(status_code=400, detail="City already exists.")
     else:
-        return crud.create_city(db=db, city=city)
+        try:
+            db_city = crud.create_city(db=db, city=city, city_id=city.id)
+            return convert_city_to_citydetails(request, db_city)
+        except sqlalchemy.exc.IntegrityError as err:
+            raise HTTPException(status_code=400, detail=f"{err}")
 
 
-@app.put("/cities/{city_id}", response_model=schemas.City)
+@app.put("/cities/{city_id}", response_model=schemas.CityDetails)
 def create_or_update_city(
-    city_id: int, city: schemas.CityCreate, db: Session = Depends(get_db)
+    request: Request,
+    response: Response,
+    city_id: int,
+    city: schemas.CityCreate,
+    db: Session = Depends(get_db),
 ):
     "Create a new or update an existing City."
     db_city = crud.get_city(db, city_id=city_id)
-    if db_city:
-        return crud.update_city(db=db, city_id=city_id, city=city)
-    else:
-        return crud.create_city(db=db, city=city)
+    try:
+        if db_city:
+            db_city = crud.update_city(db=db, city_id=city_id, city=city)
+            response.status_code = 200
+        else:
+            db_city = crud.create_city(db=db, city_id=city_id, city=city)
+            response.status_code = 201
+        return convert_city_to_citydetails(request, db_city)
+    except sqlalchemy.exc.IntegrityError as err:
+        raise HTTPException(status_code=400, detail=f"{err}")
+    
 
 
-@app.delete("/cities/{city_id}", response_model=schemas.City)
-def delete_city(city_id: int, db: Session = Depends(get_db)):
+@app.delete("/cities/{city_id}", response_model=schemas.CityDetails)
+def delete_city(request: Request, city_id: int, db: Session = Depends(get_db)):
     "Delete a City."
-    db_city = crud.delete_city(db, city_id)
+    db_city = crud.get_city(db, city_id=city_id)
     if db_city:
-        return db_city
+        # We create the response before actually deleting because
+        # we need the SQLAlchemy references to County (which is gone after deletion)
+        response_data = convert_city_to_citydetails(request, db_city)
+        response_data.link = None  # Nothing left to link to
+        crud.delete_city(db, city_id)
+        return response_data
     else:
         raise HTTPException(status_code=404, detail="City not found.")
+
+
+@app.options("/cities/{city_id}", status_code=204, response_class=Response)
+async def options_cities_with_id(city_id: int, response: Response):
+    response.headers["Allow"] = "DELETE, GET, HEAD, OPTIONS, PUT"
+    response.status_code = 204
+    return response

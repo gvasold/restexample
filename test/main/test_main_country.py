@@ -41,10 +41,20 @@ def test_get_with_param_q(client, countries):
 
 
 def test_head(client, countries):
-    "Test a head_request to /countries"
+    "Test a head_request against /countries"
     response = client.head("/countries")
     assert response.status_code == 200
 
+def test_options_countries(client, countries):
+    "Test the OPTIONS method against /countries."
+    response = client.options("/countries")
+    assert response.status_code == 204
+    allowed = [x.strip() for x in response.headers['Allow'].split(',')]
+    assert len(allowed) == 4
+    assert 'GET' in allowed
+    assert 'HEAD' in allowed
+    assert 'POST' in allowed
+    assert 'OPTIONS' in allowed
 
 def test_get_with_id(client, counties):
     "Test if client/<id> works."
@@ -59,12 +69,31 @@ def test_get_with_id(client, counties):
     assert result["counties"][0]["name"] == "County 1"
     assert result["counties"][0]["link"] == "http://testserver/counties/1"
 
+def test_get_with_non_existing_id(client, counties):
+    "Requesting a non existing country must return 404."
+    response = client.get("/countries/98765")
+    assert response.status_code == 404
+
+def test_options_with_id(client, countries):
+    "Test the OPTIONS method against /countries(<id>)."
+    response = client.options("/countries/1")
+    assert response.status_code == 204
+    allowed = [x.strip() for x in response.headers['Allow'].split(',')]
+    assert len(allowed) == 4
+    assert 'GET' in allowed
+    assert 'HEAD' in allowed
+    assert 'PUT' in allowed
+    assert 'OPTIONS' in allowed
+
 
 def test_post(client):
     "Test POST to create a new Country."
     response = client.post("/countries", json={"name": "FooBar"})
     assert response.status_code == 201
+    assert response.json()["id"]
     assert response.json()["name"] == "FooBar"
+    assert response.json()["link"]
+    assert not response.json()["counties"] #empty list
 
 
 def test_post_with_id(client):
@@ -73,22 +102,38 @@ def test_post_with_id(client):
     assert response.status_code == 201
     assert response.json()["id"] == 99
     assert response.json()["name"] == "FooBar"
+    assert response.json()["link"] == "http://testserver/countries/99"
+    assert not response.json()["counties"] #empty list
 
 
-def test_put_update(client, countries):
+def test_post_with_existing_id(client, countries):
+    "POST with an exisiting id must raise Error."
+    response = client.post("/countries", json={"id": 1, "name": "FooBar"})
+    assert response.status_code == 400
+
+
+def test_put_update(client, counties):
     "Test put to update an existing country."
     response = client.put("/countries/1", json={"name": "BarFoo"})
     assert response.status_code == 200
     assert response.json()["id"] == 1
     assert response.json()["name"] == "BarFoo"
+    assert response.json()["link"] == "http://testserver/countries/1"
+    assert len(response.json()["counties"]) == 9
+    county1 = response.json()["counties"][0]
+    assert county1["id"] == 1
+    assert county1["name"] == "County 1"
+    assert county1["link"] == "http://testserver/counties/1"
 
 
 def test_put_create(client, countries):
     "Test put to update an existing country."
     response = client.put("/countries/9123", json={"name": "Foo"})
-    assert response.status_code == 200
+    assert response.status_code == 201
     assert response.json()["id"] == 9123
     assert response.json()["name"] == "Foo"
+    assert response.json()["link"] == "http://testserver/countries/9123"
+    assert not response.json()["counties"] #empty list
 
 
 def test_delete(client, countries):
@@ -96,8 +141,3 @@ def test_delete(client, countries):
     response = client.delete("/countries/1")
     assert response.status_code == 405
 
-
-def test_options(client, countries):
-    """Cannot figure out how to make fastapi responding to options requests automatically"""
-    response = client.options("/countries")
-    assert response.status_code == 405
