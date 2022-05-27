@@ -53,12 +53,12 @@ def test_get_with_param_q(client, countries):
 
 def test_head(client, countries):
     "Test a head_request against /countries"
-    response = client.head("/countries")
+    response = client.head("/countries/")
     assert response.status_code == 200
 
 def test_options_countries(client, countries):
     "Test the OPTIONS method against /countries."
-    response = client.options("/countries")
+    response = client.options("/countries/")
     assert response.status_code == 204
     allowed = [x.strip() for x in response.headers['Allow'].split(',')]
     assert len(allowed) == 4
@@ -99,7 +99,7 @@ def test_options_with_id(client, countries):
 
 def test_post(client):
     "Test POST to create a new Country."
-    response = client.post("/countries", json={"name": "FooBar"})
+    response = client.post("/countries/", json={"name": "FooBar"})
     assert response.status_code == 201
     assert response.json()["id"]
     assert response.json()["name"] == "FooBar"
@@ -109,7 +109,7 @@ def test_post(client):
 
 def test_post_with_id(client):
     "Test POST to create a new Country with a pre defined id."
-    response = client.post("/countries", json={"id": 99, "name": "FooBar"})
+    response = client.post("/countries/", json={"id": 99, "name": "FooBar"})
     assert response.status_code == 201
     assert response.json()["id"] == 99
     assert response.json()["name"] == "FooBar"
@@ -119,7 +119,7 @@ def test_post_with_id(client):
 
 def test_post_with_existing_id(client, countries):
     "POST with an exisiting id must raise Error."
-    response = client.post("/countries", json={"id": 1, "name": "FooBar"})
+    response = client.post("/countries/", json={"id": 1, "name": "FooBar"})
     assert response.status_code == 400
 
 

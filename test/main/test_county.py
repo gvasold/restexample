@@ -58,7 +58,7 @@ def test_get_with_param_country(client, counties):
 
 def test_head(client, counties):
     "Test a head_request against /counties"
-    response = client.head("/counties")
+    response = client.head("/counties/")
     assert response.status_code == 200
 
 
@@ -108,7 +108,7 @@ def test_options_with_id(client, counties):
 
 def test_post(client, countries):
     "Test POST to create a new County."
-    response = client.post("/counties", json={"name": "FooBar", "country_id": 1})
+    response = client.post("/counties/", json={"name": "FooBar", "country_id": 1})
     assert response.status_code == 201
     assert response.json()["name"] == "FooBar"
     assert response.json()["id"]
@@ -122,7 +122,7 @@ def test_post(client, countries):
 def test_post_with_id(client, countries):
     "Test POST to create a new County with a pre defined id."
     response = client.post(
-        "/counties", json={"id": 99, "name": "FooBar", "country_id": 1}
+        "/counties/", json={"id": 99, "name": "FooBar", "country_id": 1}
     )
     assert response.status_code == 201
     assert response.json()["id"] == 99
@@ -137,14 +137,14 @@ def test_post_with_id(client, countries):
 def test_post_with_existing_id(client, counties):
     "POST with an exisiting id must raise Error."
     response = client.post(
-        "/counties", json={"id": 1, "name": "FooBar", "country_id": 1}
+        "/counties/", json={"id": 1, "name": "FooBar", "country_id": 1}
     )
     assert response.status_code == 400
 
 
 def test_post_with_non_exisiting_country_id(client, counties):
     "POST with country_id without country must raise Error."
-    response = client.post("/counties", json={"name": "FooBar", "country_id": 9999})
+    response = client.post("/counties/", json={"name": "FooBar", "country_id": 9999})
     assert response.status_code == 400
 
 
