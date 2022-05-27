@@ -21,9 +21,28 @@ def test_get(client, cities):
     assert c1["link"] == "http://testserver/cities/1"
 
 
+def test_get_with_invalid_params(client, cities):
+    "Test invalid parameters."
+    # start= must be 1 or greater.
+    response = client.get("/cities?start=0")
+    assert response.status_code == 422
+
+    # size must be 1 or greater
+    response = client.get("/cities?size=0")
+    assert response.status_code == 422
+
+    # minpop must be 1 or greater
+    response = client.get("/cities?minpop=0")
+    assert response.status_code == 422
+
+    # maxpop must be 1 or greater
+    response = client.get("/cities?maxpop=0")
+    assert response.status_code == 422
+
+
 def test_get_with_paging(client, cities):
     "Test if explicit paging works."
-    response = client.get("/cities?start=40&size=5")
+    response = client.get("/cities?start=41&size=5")
     assert response.status_code == 200
     result = response.json()
     assert len(result) == 5
@@ -38,6 +57,23 @@ def test_get_with_param_q(client, cities):
     assert len(result) == 11
     assert result[0]["name"] == "City 5"
     assert result[1]["name"] == "City 50"
+
+
+def test_get_with_param_country(client, cities):
+    "Test if country= works"
+    response = client.get("/cities?country=Country+2&size=100")
+    assert response.status_code == 200
+    result = response.json()
+    assert len(result) == 21
+
+
+def test_get_with_param_county(client, cities):
+    "Test if county= works"
+    response = client.get("/cities?county=County+2&size=100")
+    assert response.status_code == 200
+    result = response.json()
+    assert len(result) == 10
+
 
 def test_head(client, cities):
     "Test a head_request against /cities"
@@ -72,6 +108,7 @@ def test_get_with_id(client, cities):
     assert result["country"]["name"] == "Country 1"
     assert result["country"]["id"] == 1
     assert result["country"]["link"] == "http://testserver/countries/1"
+
 
 def test_get_for_non_exisiting_id(client, cities):
     "Request to non exsiting city must return 404."
@@ -160,8 +197,11 @@ def test_put_update(client, cities):
 
 def test_put_update_new_id_must_fail(client, cities):
     "Updates must not replace the id."
-    response = client.put("/cities/1", json={"id": 9999, "name": "BarFoo", "population": 77, "county_id": 1})
-    assert response.status_code == 400
+    response = client.put(
+        "/cities/1",
+        json={"id": 9999, "name": "BarFoo", "population": 77, "county_id": 1},
+    )
+    assert response.status_code == 422
 
 
 def test_put_update_fail(client, cities):
@@ -169,12 +209,14 @@ def test_put_update_fail(client, cities):
     response = client.put(
         "/cities/1", json={"name": "BarFoo", "population": 77, "county_id": 99999}
     )
-    assert response.status_code == 400
+    assert response.status_code == 422
 
 
 def test_put_create(client, cities):
     "Test put to update an existing city."
-    response = client.put("/cities/9123", json={"name": "Foo", "population": 77, "county_id": 1})
+    response = client.put(
+        "/cities/9123", json={"name": "Foo", "population": 77, "county_id": 1}
+    )
     assert response.status_code == 201
     assert response.json()["id"] == 9123
     assert response.json()["name"] == "Foo"
@@ -186,19 +228,21 @@ def test_put_create(client, cities):
     assert response.json()["country"]["name"] == "Country 1"
     assert response.json()["country"]["link"] == "http://testserver/countries/1"
 
+
 def test_put_create_fail(client, cities):
     "Creating a new city via put with a non existing county_id must fail."
     response = client.put(
         "/cities/98765", json={"name": "BarFoo", "population": 77, "county_id": 99999}
     )
-    assert response.status_code == 400
+    assert response.status_code == 422
+
 
 def test_delete(client, cities):
     "Delete as city."
     response = client.delete("/cities/1")
     assert response.status_code == 200
     assert response.json()["id"] == 1
-    assert response.json()["link"] is None # Nothing left to link to
+    assert response.json()["link"] is None  # Nothing left to link to
     assert response.json()["county"]["id"] == 1
     assert response.json()["county"]["name"] == "County 1"
     assert response.json()["county"]["link"] == "http://testserver/counties/1"
@@ -206,7 +250,61 @@ def test_delete(client, cities):
     assert response.json()["country"]["name"] == "Country 1"
     assert response.json()["country"]["link"] == "http://testserver/countries/1"
 
+
 def test_delete_non_existing(client, cities):
     "Delete a non exisiting city."
     response = client.delete("/cities/98765")
     assert response.status_code == 404
+
+
+def test_patch_name(client, cities):
+    "Test if patching name works."
+    response = client.patch("/cities/1", json={"name": "Foo"})
+    assert response.json()["id"] == 1
+    assert response.json()["name"] == "Foo"
+    assert response.json()["population"] == 10
+    assert response.json()["county"]["id"] == 1
+
+
+def test_patch_population(client, cities):
+    "Test if patching name works."
+    response = client.patch("/cities/1", json={"population": 1000000})
+    assert response.json()["id"] == 1
+    assert response.json()["name"] == "City 1"
+    assert response.json()["population"] == 1000000
+    assert response.json()["county"]["id"] == 1
+
+
+def test_patch_county(client, cities):
+    "Test if patching name works."
+    response = client.patch("/cities/1", json={"county_id": 2})
+    assert response.json()["id"] == 1
+    assert response.json()["name"] == "City 1"
+    assert response.json()["population"] == 10
+    assert response.json()["county"]["id"] == 2
+
+
+def test_patch_all(client, cities):
+    "Test if patching all allowed values works."
+    response = client.patch(
+        "/cities/1", json={"name": "FooBar", "population": 50000, "county_id": 2}
+    )
+    assert response.json()["id"] == 1
+    assert response.json()["name"] == "FooBar"
+    assert response.json()["population"] == 50000
+    assert response.json()["county"]["id"] == 2
+
+def test_patch_non_existing(client, cities):
+    "Patching a non existing cities leads to 404."
+    response = client.patch(
+        "/cities/987654", json={"name": "Foo"}
+    )
+    assert response.status_code == 404
+
+
+def test_patch_non_existing_county(client, cities):
+    "Patching a non existing cities leads to 404."
+    response = client.patch(
+        "/cities/1", json={"county_id": 987654}
+    )
+    assert response.status_code == 422

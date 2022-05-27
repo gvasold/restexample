@@ -10,13 +10,21 @@ from cities import models
 
 class CountryBase(BaseModel):
     "Pydantic Base Model for Country."
-    name: str = Field(description="Name of the country")
+    name: str = Field(description="Name of the country. This name must be unique.")
 
 
 class CountryCreate(CountryBase):
     "Request body for creation of a Country."
-    id: Union[int, None] = None
+    id: Union[int, None] = Field(default=None,
+            description=("Id of the Country to create. If not set, `id` "
+                         "will be generated automatically, which is the "
+                         "prefered way. If you want an explicit id, you "
+                         "may want to use a PUT request instead."))
 
+
+class CountryPatch(CountryBase):
+    "Schema for incoming Country data used with PATCH."
+    name: Union[str, None] = Field(default=None, description="Name of the county.")
 
 # needed for the from_model annotations.
 Country_ = TypeVar("Country_", bound="Country")
@@ -93,9 +101,18 @@ class CountryDetails(CountryBase):
 
 class CountyCreate(CountyBase):
     "Schema class for incoming County data."
-    id: Union[int, None] = None
-    name: str
-    country_id: int
+    id: Union[int, None] = Field(default=None,
+            description=("Id of the County to create. If not set, `id` "
+                         "will be generated automatically, which is the "
+                         "prefered way. If you want an explicit id, you "
+                         "may want to use a PUT request instead."))
+    name: str = Field(default=..., description="Name of the county. Must be unique.")
+    country_id: int = Field(default=..., description="Id of the country the county is located in.")
+
+class CountyPatch(CountyBase):
+    "Schema for incoming County data used with PATCH."
+    name: Union[str, None] = Field(default=None, description="Name of the county.")
+    country_id: Union[int, None] = Field(default=None, description="Id of the country the county is located in.")
 
 
 class CityBase(BaseModel):
@@ -163,11 +180,21 @@ class CountyDetails(CountyBase):
 
 class CityCreate(CityBase):
     "Schema class for incoming City data."
-    id: Union[int, None] = None
-    name: str
-    population: int
-    county_id: int
+    id: Union[int, None] = Field(default=None,
+            description=("Id of the City to create. If not set, `id` "
+                         "will be generated automatically, which is the "
+                         "prefered way. If you want an explicit id, you "
+                         "may want to use a PUT request instead."))
+    name: str = Field(default=..., description="Name of the city.")
+    population: int = Field(default=..., description="Population of the city.")
+    county_id: int = Field(default=..., description="Id of the county the city is located in.")
 
+
+class CityPatch(CityBase):
+    "Schema for incoming City data used with PATCH."
+    name: Union[str, None] = Field(default=None, description="Name of the city.")
+    population: int = Field(default=-1, gt=0, description="Population of the city.")
+    county_id: Union[int, None] = Field(default=None, description="Id of the county the city is located in.")
 
 # needed for the from_model annotations.
 CityDetails_ = TypeVar("CityDetails_", bound="CityDetails")
@@ -197,3 +224,6 @@ class CityDetails(CityBase):
             county=County.from_model(request, db_city.county),
             country=Country.from_model(request, db_city.county.country),
         )
+
+class Message(BaseModel):
+    message: str

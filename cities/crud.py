@@ -1,10 +1,24 @@
+import sqlalchemy
 from sqlalchemy.orm import Session
+import sqlalchemy.exc
 
 from . import schemas
 from .models import Country, County, City
 
-class CreationException(Exception):
+
+class CRUDException(Exception):
     pass
+
+class CreationException(CRUDException):
+    pass
+
+class UpdateException(CRUDException):
+    pass
+
+class ItemNotFoundException(CRUDException):
+    pass
+
+
 ## ----- Countries
 
 
@@ -49,13 +63,17 @@ def create_country(db: Session, country: schemas.CountyCreate, country_id: int =
     return db_country
 
 
-def update_country(db: Session, country_id: int, country: schemas.CountyCreate):
+def update_country(db: Session, country_id: int, country_name=None):
     """Update an existing Country."""
     db_country = get_country(db, country_id)
-    db_country.name = country.name
-    db.commit()
-    db.refresh(db_country)
-    return db_country
+    if db_country:
+        if country_name:
+            db_country.name = country_name
+            db.commit()
+            db.refresh(db_country)
+            return db_country
+    else:
+        raise ItemNotFoundException(f"Country with id {country_id} does not exist.")
 
 
 ## ------ Counties ----------------
@@ -101,14 +119,22 @@ def create_county(db: Session, county: schemas.CountyCreate, county_id=None):
     return db_county
 
 
-def update_county(db: Session, county_id: int, county: schemas.CountyCreate):
+def update_county(db: Session, county_id: int, county_name: str = None, country_id: int = None):
     "Create a new or update an exisisting County."
     db_county = get_county(db, county_id)
-    db_county.name = county.name
-    db_county.country_id = county.country_id
-    db.commit()
-    db.refresh(db_county)
-    return db_county
+    if db_county:
+        if county_name:
+            db_county.name = county_name
+        if country_id:
+            db_county.country_id = country_id
+        try:
+            db.commit()
+            db.refresh(db_county)
+            return db_county
+        except sqlalchemy.exc.IntegrityError as err:
+            raise UpdateException(f"There is no country with id {country_id}.")
+    else:
+        raise ItemNotFoundException(f"County with id {county_id} does not exist.")
 
 
 ## ----- cities ----
@@ -169,7 +195,6 @@ def get_city_by_name(db: Session, city_name: str):
     return db.query(City).filter(City.name == city_name).first()
 
 
-# name="bar", population=999, county_id=1, city_id=1000)
 
 
 def create_city(db: Session, city: schemas.CityCreate, city_id=None):
@@ -187,15 +212,30 @@ def create_city(db: Session, city: schemas.CityCreate, city_id=None):
     return db_city
 
 
-def update_city(db: Session, city_id: int, city: schemas.CityCreate):
-    "Create a new or update an exisisting City."
+def update_city(
+    db: Session,
+    city_id: int,
+    city_name: str = None,
+    population: int = -1,  # we might want to set it to None
+    county_id: int = None,
+):
+    "Update an existing City."
     db_city = get_city(db, city_id)
-    db_city.name = city.name
-    db_city.population = city.population
-    db_city.county_id = city.county_id
-    db.commit()
-    db.refresh(db_city)
-    return db_city
+    if db_city:
+        if city_name:
+            db_city.name = city_name
+        if population > -1:
+            db_city.population = population
+        if county_id:
+            db_city.county_id = county_id
+        try:
+            db.commit()
+            db.refresh(db_city)
+            return db_city
+        except sqlalchemy.exc.IntegrityError as err:
+            raise UpdateException(f"There is no county with id {county_id}.")
+    else:
+        raise ItemNotFoundException(f"City with id {city_id} does not exist.")
 
 
 def delete_city(db: Session, city_id: int):

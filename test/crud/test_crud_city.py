@@ -114,12 +114,13 @@ def test_create_city_with_id(db, counties):
 
 
 def test_update_city(db, cities):
-    "Update an existing county."
+    "Update an existing city."
     city = crud.update_city(
-        db, 1, CityCreate(name="FooBar 1", population=50, county_id=1)
+        db, 1, city_name="FooBar 1", population=50, county_id=2
     )
     assert city.name == "FooBar 1"
     assert city.population == 50
+    assert city.county_id == 2
 
 
 def test_delete_city(db, cities):

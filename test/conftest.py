@@ -8,11 +8,19 @@ from fastapi.testclient import TestClient
 from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker, Session
 import sqlalchemy_utils
-
+from sqlalchemy.engine import Engine
+from sqlalchemy import event
+from sqlalchemy import text
 from cities.database import Base
 from cities.main import app, get_db
 
 SQLALCHEMY_DATABASE_URL = "sqlite:///./test.db"
+
+# @event.listens_for(Engine, "connect")
+# def set_sqlite_pragma(dbapi_connection, connection_record):
+#     cursor = dbapi_connection.cursor()
+#     cursor.execute("PRAGMA foreign_keys=ON")
+#     cursor.close()
 
 
 @pytest.fixture(scope="session")
@@ -23,14 +31,20 @@ def db_engine():
 
     This engine will be used during the whole test session.
     """
+    # make sure sqlite has activated foreign key constraint
+    def _fk_pragma_on_connect(dbapi_con, con_record):
+        dbapi_con.execute('pragma foreign_keys=ON') 
+        
     engine = create_engine(
         SQLALCHEMY_DATABASE_URL, connect_args={"check_same_thread": False}
     )
+    event.listen(engine, 'connect', _fk_pragma_on_connect)
     if not sqlalchemy_utils.database_exists:
         sqlalchemy_utils.create_database(engine.url)
 
     Base.metadata.create_all(bind=engine)
     yield engine
+
 
 
 @pytest.fixture(scope="function")
@@ -46,11 +60,20 @@ def db(db_engine):
     transaction = connection.begin()
     Session = sessionmaker(autocommit=False, autoflush=False, bind=db_engine)
     db = Session(bind=connection)
+    #db.execute('PRAGMA foreign_keys=ON')
+    #äconnection = db.connection()
+    #cursor = connection.cursor()
+    #print(type(connection))
+    #con = db.connection()
+    #cursor = con.cursor()
+    #cursor.execute("PRAGMA foreign_keys=ON")
+    #cursor.close()
     yield db
 
     db.rollback()
     # transaction.commit()
     connection.close()
+
 
 
 @pytest.fixture(scope="function")

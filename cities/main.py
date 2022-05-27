@@ -1,6 +1,6 @@
 from re import I
-from typing import Optional, List, Dict
-from fastapi import Depends, FastAPI, HTTPException, Request, Response
+from typing import Optional, List, Dict, Union
+from fastapi import Depends, Query, Path, FastAPI, HTTPException, Request, Response
 from sqlalchemy.orm import Session
 import sqlalchemy.exc
 from . import crud, models, schemas
@@ -25,7 +25,7 @@ def get_db():
 
 @app.options("/countries", status_code=204, response_class=Response)
 async def options_countries(response: Response):
-    "Handle OPTIONS request for /countries."
+    "Options for `/countries`."
     response.headers["Allow"] = "GET, HEAD, OPTIONS, POST"
     response.status_code = 204
     return response
@@ -36,20 +36,44 @@ async def options_countries(response: Response):
 async def get_countries(
     request: Request,
     db: Session = Depends(get_db),
-    start: Optional[int] = 0,
-    size: Optional[int] = 20,
-    q: Optional[str] = None,
+    start: Optional[int] = Query(
+        default=1,
+        gt=0,
+        title="First result",
+        description=(
+            "Number of the first result entry to show. " "Can be used for paging."
+        ),
+    ),
+    size: Optional[int] = Query(
+        default=20,
+        title="Number of result entries",
+        gt=0,
+        description="Number of countries to be returned. Can be used for paging.",
+    ),
+    q: Union[str, None] = Query(
+        default=None, title="Query string", description="(Sub)String to search for."
+    ),
 ):
-    "Get an ordered list of countries."
+    "Get an alphabetically ordered list of countries."
     countries = []
-    for country in crud.get_countries(db=db, skip=start, limit=size, q=q):
+    for country in crud.get_countries(db=db, skip=start - 1, limit=size, q=q):
         countries.append(schemas.Country.from_model(request, country))
     return countries
 
 
-@app.head("/countries/{country_id}")
-@app.get("/countries/{country_id}", response_model=schemas.CountryDetails)
-async def get_country_by_id(request: Request, country_id: int, db: Session = Depends(get_db)):
+@app.head("/countries/{country_id}", responses={404: {"model": schemas.Message}})
+@app.get(
+    "/countries/{country_id}",
+    response_model=schemas.CountryDetails,
+    responses={404: {"model": schemas.Message}},
+)
+async def get_country_by_id(
+    request: Request,
+    db: Session = Depends(get_db),
+    country_id: int = Path(
+        default=..., title="Country id", description="The id of the country to request."
+    ),
+):
     "Get a single Country with id `country_id`."
     db_country = crud.get_country(db=db, country_id=country_id)
     if not db_country:
@@ -61,7 +85,7 @@ async def get_country_by_id(request: Request, country_id: int, db: Session = Dep
 
 @app.options("/countries/{country_id}", status_code=204, response_class=Response)
 async def options_countries_with_id(country_id: int, response: Response):
-    "Handle OPTIONS request for /countries/{country_id}."
+    "Options for /countries/{country_id}."
     response.headers["Allow"] = "GET, HEAD, OPTIONS, PUT"
     response.status_code = 204
     return response
@@ -88,7 +112,14 @@ async def create_country(
             )
 
 
-@app.put("/countries/{country_id}", response_model=schemas.CountryDetails)
+@app.put(
+    "/countries/{country_id}",
+    response_model=schemas.CountryDetails,
+    responses={
+        200: {"model": schemas.CityDetails, "description": "Updated"},
+        201: {"model": schemas.CityDetails},
+    },
+)
 async def create_or_update_country(
     response: Response,
     request: Request,
@@ -101,8 +132,10 @@ async def create_or_update_country(
     if db_country:
         # `id` is ignored anyhow, but I think it's more clear to raise a 400
         if country.id and country.id != country_id:
-            raise HTTPException(status_code=400, detail="Changing the id of a Country is not allowed")
-        db_country = crud.update_country(db=db, country_id=country_id, country=country)
+            raise HTTPException(
+                status_code=400, detail="Changing the id of a Country is not allowed"
+            )
+        db_country = crud.update_country(db=db, country_id=country_id, country_name=country.name)
         response.status_code = 200
     else:
         db_country = crud.create_country(db=db, country_id=country_id, country=country)
@@ -110,12 +143,38 @@ async def create_or_update_country(
     return schemas.CountryDetails.from_model(request, db_country)
 
 
+@app.patch(
+    "/countries/{country_id}",
+    response_model=schemas.CountryDetails,
+    responses={404: {"model": schemas.Message}},
+)
+def patch_country(
+    request: Request,
+    country_id: int,
+    country: schemas.CountryPatch,
+    db: Session = Depends(get_db),
+):
+    """Patch a country.
+
+    Updates the country with the provided value.
+    """
+    try:
+        db_country = crud.update_country(
+            db,
+            country_id=country_id,
+            country_name=country.name,
+        )
+        return schemas.CountryDetails.from_model(request, db_country)
+    except crud.ItemNotFoundException as err:
+        raise HTTPException(status_code=404, detail="No such County")
+
+
 ## ----- counties ------
 
 
 @app.options("/counties", status_code=204, response_class=Response)
 async def options_countries(response: Response):
-    "Handle OPTIONS request for /counties."
+    "Options for /counties."
     response.headers["Allow"] = "GET, HEAD, OPTIONS, POST"
     response.status_code = 204
     return response
@@ -126,23 +185,51 @@ async def options_countries(response: Response):
 async def get_counties(
     request: Request,
     db: Session = Depends(get_db),
-    start: Optional[int] = 0,
-    size: Optional[int] = 20,
-    q: Optional[str] = None,
-    country: Optional[str] = None,
+    start: Optional[int] = Query(
+        default=1,
+        gt=0,
+        title="First result",
+        description=(
+            "Number of the first result entry to show. " "Can be used for paging."
+        ),
+    ),
+    size: Optional[int] = Query(
+        default=20,
+        title="Number of result entries",
+        gt=0,
+        description="Number of counties to be returned. Can be used for paging.",
+    ),
+    q: Union[str, None] = Query(
+        default=None, title="Query string", description="(Sub)String to search for."
+    ),
+    country: Union[str, None] = Query(
+        default=None,
+        title="filter by country",
+        description="Filter result by country name.",
+    ),
 ):
     "Get an ordered list of counties."
     counties = []
     for db_county in crud.get_counties(
-        db=db, skip=start, limit=size, q=q, country=country
+        db=db, skip=start - 1, limit=size, q=q, country=country
     ):
         counties.append(schemas.County.from_model(request, db_county))
     return counties
 
 
-@app.head("/counties/{county_id}")
-@app.get("/counties/{county_id}", response_model=schemas.CountyDetails)
-async def get_county_by_id(request: Request, county_id: int, db: Session = Depends(get_db)):
+@app.head("/counties/{county_id}", responses={404: {"model": schemas.Message}})
+@app.get(
+    "/counties/{county_id}",
+    response_model=schemas.CountyDetails,
+    responses={404: {"model": schemas.Message}},
+)
+async def get_county_by_id(
+    request: Request,
+    county_id: int = Query(
+        default=..., title="County id", description="The id of the county to request."
+    ),
+    db: Session = Depends(get_db),
+):
     "Get County with id `county_id`."
     db_county = crud.get_county(db=db, county_id=county_id)
     if not db_county:
@@ -152,7 +239,7 @@ async def get_county_by_id(request: Request, county_id: int, db: Session = Depen
 
 @app.options("/counties/{county_id}", status_code=204, response_class=Response)
 async def options_counties_with_id(county_id: int, response: Response):
-    "Handle OPTIONS request for /counties/{counties_id}"
+    "Options for /counties/{counties_id}"
     response.headers["Allow"] = "GET, HEAD, OPTIONS, PUT"
     response.status_code = 204
     return response
@@ -174,7 +261,14 @@ async def create_county(
             raise HTTPException(status_code=400, detail=f"{err}")
 
 
-@app.put("/counties/{county_id}", response_model=schemas.CountyDetails)
+@app.put(
+    "/counties/{county_id}",
+    response_model=schemas.CountyDetails,
+    responses={
+        200: {"model": schemas.CityDetails, "description": "Updated"},
+        201: {"model": schemas.CityDetails},
+    },
+)
 async def create_or_update_county(
     request: Request,
     response: Response,
@@ -188,9 +282,19 @@ async def create_or_update_county(
         if db_county:
             # `id` is ignored anyhow, but I think it's more clear to raise a 400
             if county.id and county.id != county_id:
-                raise HTTPException(status_code=400, detail="Changing the id of a County is not allowed")
-            db_county = crud.update_county(db=db, county_id=county_id, county=county)
-            response.status_code = 200
+                raise HTTPException(
+                    status_code=400, detail="Changing the id of a County is not allowed"
+                )
+            try:
+                db_county = crud.update_county(
+                    db=db,
+                    county_id=county_id,
+                    county_name=county.name,
+                    country_id=county.country_id,
+                )
+                response.status_code = 200
+            except crud.UpdateException as err:
+                raise HTTPException(status_code=400, detail=f"{err}")
         else:
             db_county = crud.create_county(db=db, county_id=county_id, county=county)
             response.status_code = 201
@@ -199,12 +303,41 @@ async def create_or_update_county(
         raise HTTPException(status_code=400, detail=f"{err}")
 
 
+@app.patch(
+    "/counties/{county_id}",
+    response_model=schemas.CountyDetails,
+    responses={404: {"model": schemas.Message}},
+)
+def patch_county(
+    request: Request,
+    county_id: int,
+    county: schemas.CountyPatch,
+    db: Session = Depends(get_db),
+):
+    """Patch a county.
+
+    Updates the county with the provided values.
+    """
+    try:
+        db_county = crud.update_county(
+            db,
+            county_id=county_id,
+            county_name=county.name,
+            country_id=county.country_id,
+        )
+        return schemas.CountyDetails.from_model(request, db_county)
+    except crud.ItemNotFoundException as err:
+        raise HTTPException(status_code=404, detail="No such County")
+    except crud.UpdateException as err:
+        raise HTTPException(status_code=422, detail=f"{err}")
+
+
 ## ----- Cities -----
 
 
 @app.options("/cities", status_code=204, response_class=Response)
 async def options_cities(response: Response):
-    "Handle OPTIONS request for /cities."
+    "Options for /cities."
     response.headers["Allow"] = "GET, HEAD, OPTIONS, POST"
     response.status_code = 204
     return response
@@ -214,20 +347,58 @@ async def options_cities(response: Response):
 @app.get("/cities", response_model=List[schemas.City])
 async def get_cities(
     request: Request,
-    start: Optional[int] = 0,
-    size: Optional[int] = 20,
-    q: Optional[str] = None,
-    minpop: Optional[int] = None,
-    maxpop: Optional[int] = None,
-    county: Optional[str] = None,
-    country: Optional[str] = None,
+    start: Optional[int] = Query(
+        default=1,
+        gt=0,
+        title="First result",
+        description=(
+            "Number of the first result entry to show. " "Can be used for paging."
+        ),
+    ),
+    size: Optional[int] = Query(
+        default=20,
+        title="Number of result entries",
+        gt=0,
+        description="Number of counties to be returned. Can be used for paging.",
+    ),
+    q: Union[str, None] = Query(
+        default=None, title="Query string", description="(Sub)String to search for."
+    ),
+    minpop: Union[int, None] = Query(
+        default=None,
+        gt=0,
+        title="Minimum population",
+        description=(
+            "Set a minimum population filter. Filter for cities with a "
+            "population greater equals `minpop`."
+        ),
+    ),
+    maxpop: Union[int, None] = Query(
+        default=None,
+        gt=0,
+        title="Maximum population",
+        description=(
+            "Set a maximum population filter. Filter for cities with a "
+            "population less equals `maxpop`."
+        ),
+    ),
+    county: Union[str, None] = Query(
+        default=None,
+        title="Filter by county",
+        description="Filter cities by county name.",
+    ),
+    country: Union[str, None] = Query(
+        default=None,
+        title="Filter by country",
+        description="Filter cities by country name.",
+    ),
     db: Session = Depends(get_db),
 ):
     "Get an ordered list of cities."
     cities = []
     for db_city in crud.get_cities(
         db=db,
-        skip=start,
+        skip=start - 1,
         limit=size,
         q=q,
         minpop=minpop,
@@ -239,9 +410,19 @@ async def get_cities(
     return cities
 
 
-@app.head("/cities/{city_id}")
-@app.get("/cities/{city_id}", response_model=schemas.CityDetails)
-async def get_city_by_id(request: Request, city_id: int, db: Session = Depends(get_db)):
+@app.head("/cities/{city_id}", responses={404: {"model": schemas.Message}})
+@app.get(
+    "/cities/{city_id}",
+    response_model=schemas.CityDetails,
+    responses={404: {"model": schemas.Message}},
+)
+async def get_city_by_id(
+    request: Request,
+    city_id: int = Query(
+        default=..., title="City id", description="The id of the city to request."
+    ),
+    db: Session = Depends(get_db),
+):
     "Get City with id `city_id`."
     db_city = crud.get_city(db=db, city_id=city_id)
     if not db_city:
@@ -265,7 +446,14 @@ async def create_city(
             raise HTTPException(status_code=400, detail=f"{err}")
 
 
-@app.put("/cities/{city_id}", response_model=schemas.CityDetails)
+@app.put(
+    "/cities/{city_id}",
+    response_model=schemas.CityDetails,
+    responses={
+        200: {"model": schemas.CityDetails, "description": "Updated"},
+        201: {"model": schemas.CityDetails},
+    },
+)
 async def create_or_update_city(
     request: Request,
     response: Response,
@@ -278,15 +466,56 @@ async def create_or_update_city(
     try:
         if db_city:
             if city.id and city.id != city_id:
-                raise HTTPException(status_code=400, detail="Changing the id of a City is not allowed")
-            db_city = crud.update_city(db=db, city_id=city_id, city=city)
-            response.status_code = 200
+                raise HTTPException(
+                    status_code=422, detail="Changing the id of a City is not allowed"
+                )
+            try:
+                db_city = crud.update_city(
+                    db=db,
+                    city_id=city_id,
+                    city_name=city.name,
+                    population=city.population,
+                    county_id=city.county_id,
+                )
+                response.status_code = 200
+            except crud.UpdateException as err:
+                raise HTTPException(status_code=422, detail=f"{err}")
         else:
             db_city = crud.create_city(db=db, city_id=city_id, city=city)
             response.status_code = 201
         return schemas.CityDetails.from_model(request, db_city)
     except sqlalchemy.exc.IntegrityError as err:
-        raise HTTPException(status_code=400, detail=f"{err}")
+        raise HTTPException(status_code=422, detail=f"{err}")
+
+
+@app.patch(
+    "/cities/{city_id}",
+    response_model=schemas.CityDetails,
+    responses={404: {"model": schemas.Message}},
+)
+def patch_city(
+    request: Request,
+    city_id: int,
+    city: schemas.CityPatch,
+    db: Session = Depends(get_db),
+):
+    """Patch a city.
+
+    Updates the city with the provided values.
+    """
+    try:
+        db_city = crud.update_city(
+            db,
+            city_id=city_id,
+            city_name=city.name,
+            population=city.population,
+            county_id=city.county_id,
+        )
+        return schemas.CityDetails.from_model(request, db_city)
+    except crud.ItemNotFoundException as err:
+        raise HTTPException(status_code=404, detail="No such City")
+    except crud.UpdateException as err:
+        raise HTTPException(status_code=422, detail=f"{err}")
 
 
 @app.delete("/cities/{city_id}", response_model=schemas.CityDetails)
@@ -306,7 +535,7 @@ async def delete_city(request: Request, city_id: int, db: Session = Depends(get_
 
 @app.options("/cities/{city_id}", status_code=204, response_class=Response)
 async def options_cities_with_id(city_id: int, response: Response):
-    "Handle OPTIONS request for /cities/{city_id}"
+    "Options for /cities/{city_id}"
     response.headers["Allow"] = "DELETE, GET, HEAD, OPTIONS, PUT"
     response.status_code = 204
     return response

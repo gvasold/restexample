@@ -65,5 +65,5 @@ def test_create_country_with_id(db, countries):
 
 def test_update_country(db, countries):
     "Update an existing country."
-    country = crud.update_country(db, 1, CountryCreate(name="FooBar 1"))
+    country = crud.update_country(db, 1, country_name="FooBar 1")
     assert country.name == "FooBar 1"

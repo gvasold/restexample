@@ -73,5 +73,5 @@ def test_create_county_with_id(db, counties):
 
 def test_update_county(db, counties):
     "Update an existing county."
-    county = crud.update_county(db, 1, CountyCreate(name="FooBar 1", country_id=1))
+    county = crud.update_county(db, 1, county_name="FooBar 1", country_id=1)
     assert county.name == "FooBar 1"

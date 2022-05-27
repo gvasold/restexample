@@ -23,11 +23,22 @@ def test_get(client, countries):
 
 def test_get_with_paging(client, countries):
     "Test if explicit paging works."
-    response = client.get("/countries?start=40&size=5")
+    response = client.get("/countries?start=41&size=5")
     assert response.status_code == 200
     result = response.json()
     assert len(result) == 5
     assert result[0]["id"] == 36
+
+def test_get_with_invalid_params(client, countries):
+    "Test invalid parameters."
+    #start= must be 1 or greater.
+    response = client.get("/countries?start=0")
+    assert response.status_code == 422
+
+    # size must be 1 or greater
+    response = client.get("/countries?size=0")
+    assert response.status_code == 422
+    
 
 
 def test_get_with_param_q(client, countries):
@@ -147,3 +158,17 @@ def test_delete(client, countries):
     response = client.delete("/countries/1")
     assert response.status_code == 405
 
+def test_patch_name(client, countries):
+    "Test if patching name works."
+    response = client.patch("/countries/1", json={"name": "Foo"})
+    assert response.json()["id"] == 1
+    assert response.json()["name"] == "Foo"
+
+
+def test_patch_non_existing(client, counties):
+    "Patching a non existing country leads to 404."
+    response = client.patch(
+        "/countries/987654", json={"name": "Foo"}
+        
+    )
+    assert response.status_code == 404

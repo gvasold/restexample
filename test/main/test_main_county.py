@@ -23,12 +23,21 @@ def test_get(client, counties):
 
 def test_get_with_paging(client, counties):
     "Test if explicit paging works."
-    response = client.get("/counties?start=40&size=5")
+    response = client.get("/counties?start=41&size=5")
     assert response.status_code == 200
     result = response.json()
     assert len(result) == 5
     assert result[0]["id"] == 36
 
+def test_get_with_invalid_params(client, counties):
+    "Test invalid parameters."
+    #start= must be 1 or greater.
+    response = client.get("/counties?start=0")
+    assert response.status_code == 422
+
+    # size must be 1 or greater
+    response = client.get("/counties?size=0")
+    assert response.status_code == 422
 
 def test_get_with_param_q(client, counties):
     "Test if ?q= works"
@@ -39,6 +48,13 @@ def test_get_with_param_q(client, counties):
     assert result[0]["name"] == "County 5"
     assert result[1]["name"] == "County 50"
 
+
+def test_get_with_param_country(client, counties):
+    "Test if ?country= works"
+    response = client.get("/counties?country=Country+2")
+    assert response.status_code == 200
+    result = response.json()
+    assert len(result) == 10
 
 def test_head(client, counties):
     "Test a head_request against /counties"
@@ -184,3 +200,44 @@ def test_delete(client, counties):
     "Delete is not implemented for counties."
     response = client.delete("/counties/1")
     assert response.status_code == 405
+
+def test_patch_name(client, cities):
+    "Test if patching name works."
+    response = client.patch("/counties/1", json={"name": "Foo"})
+    assert response.json()["id"] == 1
+    assert response.json()["name"] == "Foo"
+    assert response.json()["country"]["id"] == 1
+
+
+def test_patch_country(client, counties):
+    "Test if patching name works."
+    response = client.patch("/counties/1", json={"country_id": 2})
+    assert response.json()["id"] == 1
+    assert response.json()["name"] == "County 1"
+    assert response.json()["country"]["id"] == 2
+
+
+def test_patch_all(client, counties):
+    "Test if patching all allowed values works."
+    response = client.patch(
+        "/counties/1", json={"name": "FooBar", "country_id": 2}
+    )
+    assert response.json()["id"] == 1
+    assert response.json()["name"] == "FooBar"
+    assert response.json()["country"]["id"] == 2
+
+def test_patch_non_existing(client, counties):
+    "Patching a non existing counties leads to 404."
+    response = client.patch(
+        "/counties/987654", json={"name": "Foo"}
+        
+    )
+    assert response.status_code == 404
+
+
+def test_patch_non_existing_country(client, counties):
+    "Patching a non existing county leads to 404."
+    response = client.patch(
+        "/counties/1", json={"country_id": 987654}
+    )
+    assert response.status_code == 422
