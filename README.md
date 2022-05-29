@@ -1,6 +1,12 @@
-# cities example TEST server
+# A simple REST server I use for teaching
 
-`restexample` is a simple REST server I wrote for teaching REST.
+`restexample` is a simple REST server based on FastAPI, I wrote for teaching REST. 
+
+It has a few endpoints and supports the most important methods and also (partly) content negotiation.
+Details can be found in the OpenAPI based documentation available (after installation)
+unter http://localhost/redoc.
+
+Example data are all Austrian cities with their counties and counties.
 
 
 ## Installation
