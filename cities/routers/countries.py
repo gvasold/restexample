@@ -1,11 +1,13 @@
-from typing import List, Optional, Union
+"""Endpointy for /contries.
+"""
+from typing import Optional, Union
 
 import sqlalchemy.exc
-from fastapi import APIRouter, Depends, HTTPException, Path, Query, Request, Response
+from fastapi import APIRouter, Depends, HTTPException, Query, Request, Response
 from sqlalchemy.orm import Session
 
-from .. import crud, database, models, schemas
-from ..dependencies import get_db
+from .. import crud, schemas
+from .. dependencies import get_db
 
 router = APIRouter(
     prefix="/countries",
@@ -61,14 +63,13 @@ async def create_country(
     db_country = crud.get_country_by_name(db, country.name)
     if db_country:
         raise HTTPException(status_code=400, detail="Country already exists.")
-    else:
-        try:
-            db_country = crud.create_country(
-                db=db, country=country, country_id=country.id
-            )
-            return schemas.CountryDetails.from_model(request, db_country)
-        except (sqlalchemy.exc.IntegrityError, crud.CreationException):
-            raise HTTPException(
-                status_code=400,
-                detail=f"Country with id '{country.id}' already exists.",
-            )
+    try:
+        db_country = crud.create_country(
+            db=db, country=country, country_id=country.id
+        )
+        return schemas.CountryDetails.from_model(request, db_country)
+    except (sqlalchemy.exc.IntegrityError, crud.CreationException) as err:
+        raise HTTPException(
+            status_code=400,
+            detail=f"Country with id '{country.id}' already exists.",
+        ) from err

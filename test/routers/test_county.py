@@ -1,5 +1,6 @@
 """Test endpoints defined in routers/county.
 """
+# pylint: disable=W0613
 
 
 def test_get_with_id(client, cities):

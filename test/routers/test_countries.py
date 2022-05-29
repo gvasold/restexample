@@ -1,8 +1,6 @@
 """Test endpoints defined in routers/countries.
 """
-import pytest
-from cities.crud import create_country
-from cities.schemas import CountryCreate
+# pylint: disable=W0613
 
 
 def test_get(client, countries):
@@ -15,10 +13,10 @@ def test_get(client, countries):
     assert results[1]["id"] == 10
 
     # check response format
-    c1 = results[0]
-    assert c1["id"] == 1
-    assert c1["name"] == "Country 1"
-    assert c1["link"] == "http://testserver/countries/1"
+    first_result = results[0]
+    assert first_result["id"] == 1
+    assert first_result["name"] == "Country 1"
+    assert first_result["link"] == "http://testserver/countries/1"
 
 
 def test_get_with_paging(client, countries):

@@ -1,8 +1,6 @@
 """Test endpoints defined in routers/cities.
 """
-import pytest
-from cities.crud import create_city
-from cities.schemas import CityCreate
+# pylint: disable=W0613
 
 
 def test_get(client, cities):
@@ -15,10 +13,10 @@ def test_get(client, cities):
     assert results[1]["id"] == 10
 
     # check response format
-    c1 = results[0]
-    assert c1["id"] == 1
-    assert c1["name"] == "City 1"
-    assert c1["link"] == "http://testserver/cities/1"
+    first_city = results[0]
+    assert first_city["id"] == 1
+    assert first_city["name"] == "City 1"
+    assert first_city["link"] == "http://testserver/cities/1"
 
 
 def test_get_with_invalid_params(client, cities):

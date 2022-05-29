@@ -1,0 +1,8 @@
+[MASTER]
+extension-pkg-whitelist=pydantic
+
+[FORMAT]
+good-names=i,j,k,db,q,rv,_,Country_,CountryDetails_,County_,CountyDetails_,City_,CityDetails_
+
+
+

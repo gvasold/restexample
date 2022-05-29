@@ -1,8 +1,7 @@
 """Test endpoints defined in routers/counties.
 """
-import pytest
-from cities.crud import create_county
-from cities.schemas import CountyCreate
+
+# pylint: disable=W0613
 
 
 def test_get(client, counties):
@@ -15,10 +14,10 @@ def test_get(client, counties):
     assert results[1]["id"] == 10
 
     # check response format
-    c1 = results[0]
-    assert c1["id"] == 1
-    assert c1["name"] == "County 1"
-    assert c1["link"] == "http://testserver/counties/1"
+    first_result = results[0]
+    assert first_result["id"] == 1
+    assert first_result["name"] == "County 1"
+    assert first_result["link"] == "http://testserver/counties/1"
 
 
 def test_get_with_paging(client, counties):

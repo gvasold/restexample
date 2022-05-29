@@ -1,7 +1,9 @@
+"""Test County related CRUD functions.
+"""
+# pylint: disable=W0613
+import pytest
 from cities import crud
 from cities.schemas import CountyCreate
-import pytest
-import sqlalchemy.exc
 
 
 def test_get_county(db, counties):
@@ -41,11 +43,13 @@ def test_get_counties_with_q(db, counties):
 
 
 def test_counties_with_country(db, counties):
+    "Test filtering by country."
     result = crud.get_counties(db, country="Country 2")
     assert len(result) == 10
 
 
 def test_get_county_by_name(db, counties):
+    "Test finding country by name."
     county = crud.get_county_by_name(db, "County 99")
     assert county.id == 99
 

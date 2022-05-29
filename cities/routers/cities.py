@@ -1,10 +1,12 @@
+"""Endpoints for /cities.
+"""
 from typing import List, Optional, Union
 
 import sqlalchemy.exc
-from fastapi import APIRouter, Depends, HTTPException, Path, Query, Request, Response
+from fastapi import APIRouter, Depends, HTTPException, Query, Request, Response
 from sqlalchemy.orm import Session
 
-from .. import crud, database, models, schemas
+from .. import crud, schemas
 from ..dependencies import get_db
 
 router = APIRouter(
@@ -79,6 +81,7 @@ async def get_cities(
     db: Session = Depends(get_db),
 ):
     "Get an ordered list of cities."
+    # pylint: disable=R0913
     cities = []
     for db_city in crud.get_cities(
         db=db,
@@ -94,11 +97,7 @@ async def get_cities(
     return cities
 
 
-
-
-@router.post(
-    "/", response_model=schemas.CityDetails, status_code=201
-)
+@router.post("/", response_model=schemas.CityDetails, status_code=201)
 async def create_city(
     request: Request, city: schemas.CityCreate, db: Session = Depends(get_db)
 ):
@@ -106,12 +105,8 @@ async def create_city(
     db_city = crud.get_city_by_name(db, city.name)
     if db_city:
         raise HTTPException(status_code=400, detail="City already exists.")
-    else:
-        try:
-            db_city = crud.create_city(db=db, city=city, city_id=city.id)
-            return schemas.CityDetails.from_model(request, db_city)
-        except (sqlalchemy.exc.IntegrityError, crud.CreationException) as err:
-            raise HTTPException(status_code=400, detail=f"{err}")
-
-
-
+    try:
+        db_city = crud.create_city(db=db, city=city, city_id=city.id)
+        return schemas.CityDetails.from_model(request, db_city)
+    except (sqlalchemy.exc.IntegrityError, crud.CreationException) as err:
+        raise HTTPException(status_code=400, detail=f"{err}") from err

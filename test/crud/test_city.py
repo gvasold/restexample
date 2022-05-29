@@ -1,8 +1,10 @@
-from re import I
-from cities import crud
-from cities.schemas import CityCreate
+"""Test for city related CRUD function.
+"""
+# pylint: disable=W0613
 import pytest
 import sqlalchemy.exc
+from cities import crud
+from cities.schemas import CityCreate
 
 
 def test_get_city(db, cities):
@@ -71,6 +73,7 @@ def test_get_cities_with_pop_interval(db, cities):
 
 
 def test_get_cities_with_county(db, cities):
+    "Test filtering by county."
     result = crud.get_cities(db, county="County 3")
     assert len(result) == 10
 
@@ -82,6 +85,7 @@ def test_get_cities_with_country(db, cities):
 
 
 def test_get_city_by_name(db, cities):
+    "Test filtering by city name."
     county = crud.get_city_by_name(db, "City 99")
     assert county.id == 99
 
@@ -115,9 +119,7 @@ def test_create_city_with_id(db, counties):
 
 def test_update_city(db, cities):
     "Update an existing city."
-    city = crud.update_city(
-        db, 1, city_name="FooBar 1", population=50, county_id=2
-    )
+    city = crud.update_city(db, 1, city_name="FooBar 1", population=50, county_id=2)
     assert city.name == "FooBar 1"
     assert city.population == 50
     assert city.county_id == 2

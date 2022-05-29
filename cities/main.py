@@ -1,12 +1,10 @@
-from re import I
-from typing import Optional, List, Dict, Union
-from fastapi import Depends, Query, Path, FastAPI, HTTPException, Request, Response
-from sqlalchemy.orm import Session
-import sqlalchemy.exc
-from . import crud, models, schemas, database
+"""The entypoint of the app.
+"""
+from fastapi import FastAPI
 
-from . dependencies import get_db
-from . routers import countries, country, counties, county, cities, city
+from . import database, models
+from .routers import cities, city, counties, countries, country, county
+
 models.Base.metadata.create_all(bind=database.engine)
 
 

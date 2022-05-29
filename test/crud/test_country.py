@@ -1,7 +1,9 @@
-from cities import crud
-from cities.schemas import CountryCreate
+"Test Country related CRUD function."
+# pylint: disable=W0613
 import pytest
 import sqlalchemy.exc
+from cities import crud
+from cities.schemas import CountryCreate
 
 
 def test_get_country(db, countries):
@@ -40,6 +42,7 @@ def test_get_countries_with_q(db, countries):
 
 
 def test_get_country_by_name(db, countries):
+    "Test finding countries by name."
     country = crud.get_country_by_name(db, "Country 99")
     assert country.id == 99
 

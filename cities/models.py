@@ -1,9 +1,12 @@
-from sqlalchemy import Boolean, Column, ForeignKey, Integer, String
+"""SQLAlchemy Models.
+"""
+from sqlalchemy import Column, ForeignKey, Integer, String
 from sqlalchemy.orm import relationship
 
 from .database import Base
-
+# pylint: disable=R0903
 class Country(Base):
+    "A country."
     __tablename__ = 'countries'
 
     id = Column(Integer, primary_key=True, index=True)
@@ -12,7 +15,8 @@ class Country(Base):
     counties = relationship("County", back_populates="country")
 
 class County(Base):
-    __tablename__ = 'counties'    
+    "A county."
+    __tablename__ = 'counties'
 
     id = Column(Integer, primary_key=True, index=True)
     name = Column(String, index=True)
@@ -23,6 +27,7 @@ class County(Base):
 
 
 class City(Base):
+    "A city."
     __tablename__ = 'cities'
 
     id = Column(Integer, primary_key=True, index=True)

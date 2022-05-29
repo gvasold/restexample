@@ -1,3 +1,4 @@
+"CRUD function for Country, County and City."
 import sqlalchemy
 from sqlalchemy.orm import Session
 import sqlalchemy.exc
@@ -7,16 +8,16 @@ from .models import Country, County, City
 
 
 class CRUDException(Exception):
-    pass
+    "A generic CRUD exception."
 
 class CreationException(CRUDException):
-    pass
+    "Excepetion raised when creation of entry fails."
 
 class UpdateException(CRUDException):
-    pass
+    "Excepetion raised when update of entry fails."
 
 class ItemNotFoundException(CRUDException):
-    pass
+    "Excepetion raised when object to update does not exist."
 
 
 ## ----- Countries
@@ -71,9 +72,9 @@ def update_country(db: Session, country_id: int, country_name=None):
             db_country.name = country_name
             db.commit()
             db.refresh(db_country)
-            return db_country
     else:
         raise ItemNotFoundException(f"Country with id {country_id} does not exist.")
+    return db_country
 
 
 ## ------ Counties ----------------
@@ -103,6 +104,7 @@ def get_counties(db: Session, skip: int = 0, limit: int = 100, q=None, country=N
 
 
 def get_county_by_name(db: Session, county_name: str):
+    "Find County by county name."
     return db.query(County).filter(County.name == county_name).first()
 
 
@@ -132,7 +134,7 @@ def update_county(db: Session, county_id: int, county_name: str = None, country_
             db.refresh(db_county)
             return db_county
         except sqlalchemy.exc.IntegrityError as err:
-            raise UpdateException(f"There is no country with id {country_id}.")
+            raise UpdateException(f"There is no country with id {country_id}.") from err
     else:
         raise ItemNotFoundException(f"County with id {county_id} does not exist.")
 
@@ -233,7 +235,7 @@ def update_city(
             db.refresh(db_city)
             return db_city
         except sqlalchemy.exc.IntegrityError as err:
-            raise UpdateException(f"There is no county with id {county_id}.")
+            raise UpdateException(f"There is no county with id {county_id}.") from err
     else:
         raise ItemNotFoundException(f"City with id {city_id} does not exist.")
 

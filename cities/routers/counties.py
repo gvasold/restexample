@@ -1,12 +1,14 @@
+"""Endpoints for /counties
+"""
 from typing import List, Optional, Union
 
 import sqlalchemy.exc
-from fastapi import (APIRouter, Depends, HTTPException, Path, Query, Request,
+from fastapi import (APIRouter, Depends, HTTPException, Query, Request,
                      Response)
 from sqlalchemy.orm import Session
 
-from .. import crud, database, models, schemas
-from ..dependencies import get_db
+from .. import crud, schemas
+from .. dependencies import get_db
 
 router = APIRouter(
     prefix="/counties",
@@ -57,13 +59,13 @@ async def get_counties(
     ),
 ):
     "Get an ordered list of counties."
+    # pylint: disable=R0913
     counties = []
     for db_county in crud.get_counties(
         db=db, skip=start - 1, limit=size, q=q, country=country
     ):
         counties.append(schemas.County.from_model(request, db_county))
     return counties
-
 
 
 @router.post("/", response_model=schemas.CountyDetails, status_code=201)
@@ -74,11 +76,8 @@ async def create_county(
     db_county = crud.get_county_by_name(db, county.name)
     if db_county:
         raise HTTPException(status_code=400, detail="County already exists.")
-    else:
-        try:
-            db_county = crud.create_county(db=db, county=county, county_id=county.id)
-            return schemas.CountyDetails.from_model(request, db_county)
-        except ((sqlalchemy.exc.IntegrityError, crud.CreationException)) as err:
-            raise HTTPException(status_code=400, detail=f"{err}")
-
-
+    try:
+        db_county = crud.create_county(db=db, county=county, county_id=county.id)
+        return schemas.CountyDetails.from_model(request, db_county)
+    except ((sqlalchemy.exc.IntegrityError, crud.CreationException)) as err:
+        raise HTTPException(status_code=400, detail=f"{err}") from err

@@ -1,10 +1,10 @@
-from typing import List, Optional, Union
-
+"""Endpointy for /cities/{id}
+"""
 import sqlalchemy.exc
-from fastapi import APIRouter, Depends, HTTPException, Path, Query, Request, Response
+from fastapi import APIRouter, Depends, HTTPException, Query, Request, Response
 from sqlalchemy.orm import Session
 
-from .. import crud, database, models, schemas
+from .. import crud, schemas
 from ..dependencies import get_db
 
 router = APIRouter(
@@ -17,6 +17,7 @@ router = APIRouter(
         201: {"model": schemas.CityDetails},
     },
 )
+
 
 @router.head("/{city_id}")
 @router.get(
@@ -66,13 +67,13 @@ async def create_or_update_city(
                 )
                 response.status_code = 200
             except crud.UpdateException as err:
-                raise HTTPException(status_code=422, detail=f"{err}")
+                raise HTTPException(status_code=422, detail=f"{err}") from err
         else:
             db_city = crud.create_city(db=db, city_id=city_id, city=city)
             response.status_code = 201
         return schemas.CityDetails.from_model(request, db_city)
     except sqlalchemy.exc.IntegrityError as err:
-        raise HTTPException(status_code=422, detail=f"{err}")
+        raise HTTPException(status_code=422, detail=f"{err}") from err
 
 
 @router.patch(
@@ -99,31 +100,29 @@ def patch_city(
         )
         return schemas.CityDetails.from_model(request, db_city)
     except crud.ItemNotFoundException as err:
-        raise HTTPException(status_code=404, detail="No such City")
+        raise HTTPException(status_code=404, detail="No such City") from err
     except crud.UpdateException as err:
-        raise HTTPException(status_code=422, detail=f"{err}")
+        raise HTTPException(status_code=422, detail=f"{err}") from err
 
 
 @router.delete("/{city_id}", response_model=schemas.CityDetails)
 async def delete_city(request: Request, city_id: int, db: Session = Depends(get_db)):
     "Delete a City."
     db_city = crud.get_city(db, city_id=city_id)
-    if db_city:
-        # We create the response before actually deleting because
-        # we need the SQLAlchemy references to County (which is gone after deletion)
-        response_data = schemas.CityDetails.from_model(request, db_city)
-        response_data.link = None  # Nothing left to link to
-        crud.delete_city(db, city_id)
-        return response_data
-    else:
+    if not db_city:
         raise HTTPException(status_code=404, detail="City not found.")
+    # We create the response before actually deleting because
+    # we need the SQLAlchemy references to County (which is gone after deletion)
+    response_data = schemas.CityDetails.from_model(request, db_city)
+    response_data.link = None  # Nothing left to link to
+    crud.delete_city(db, city_id)
+    return response_data
 
 
-@router.options(
-    "/{city_id}", status_code=204, response_class=Response
-)
+@router.options("/{city_id}", status_code=204, response_class=Response)
 async def options_cities_with_id(city_id: int, response: Response):
     "Options for /cities/{city_id}"
+    # pylint: disable=W0613
     response.headers["Allow"] = "DELETE, GET, HEAD, OPTIONS, PUT"
     response.status_code = 204
     return response

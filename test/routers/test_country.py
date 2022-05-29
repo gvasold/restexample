@@ -1,6 +1,7 @@
 """Test endpoints defined in routers/country.
 """
 from cities.routers.country import get_image_file_for, parse_accept_header
+# pylint: disable=W0613
 
 
 def test_get_with_id(client, counties):

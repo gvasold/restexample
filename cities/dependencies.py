@@ -1,4 +1,6 @@
-from . database import SessionLocal, engine
+"""Function used in dependency injections.
+"""
+from . database import SessionLocal
 
 
 def get_db():
@@ -8,4 +10,3 @@ def get_db():
         yield db
     finally:
         db.close()
-

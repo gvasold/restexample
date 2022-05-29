@@ -1,11 +1,12 @@
-from typing import List, Optional, Union
+"""Endpoints for /county/{county_id}.
+"""
 
 import sqlalchemy.exc
-from fastapi import (APIRouter, Depends, HTTPException, Path, Query, Request,
+from fastapi import (APIRouter, Depends, HTTPException, Query, Request,
                      Response)
 from sqlalchemy.orm import Session
 
-from .. import crud, database, models, schemas
+from .. import crud, schemas
 from ..dependencies import get_db
 
 router = APIRouter(
@@ -41,12 +42,13 @@ async def get_county_by_id(
 @router.options("/{county_id}", status_code=204, response_class=Response)
 async def options_counties_with_id(county_id: int, response: Response):
     "Options for /counties/{counties_id}"
+    # pylint: disable=W0613
     response.headers["Allow"] = "GET, HEAD, OPTIONS, PUT"
     response.status_code = 204
     return response
 
 @router.put(
-    "/{county_id}", 
+    "/{county_id}",
     response_model=schemas.CountyDetails,
 )
 async def create_or_update_county(
@@ -74,17 +76,17 @@ async def create_or_update_county(
                 )
                 response.status_code = 200
             except crud.UpdateException as err:
-                raise HTTPException(status_code=400, detail=f"{err}")
+                raise HTTPException(status_code=400, detail=f"{err}") from err
         else:
             db_county = crud.create_county(db=db, county_id=county_id, county=county)
             response.status_code = 201
         return schemas.CountyDetails.from_model(request, db_county)
     except sqlalchemy.exc.IntegrityError as err:
-        raise HTTPException(status_code=400, detail=f"{err}")
+        raise HTTPException(status_code=400, detail=f"{err}") from err
 
 
 @router.patch(
-    "/{county_id}", 
+    "/{county_id}",
     response_model=schemas.CountyDetails,
     #responses={404: {"model": schemas.Message}},
 )
@@ -107,6 +109,6 @@ def patch_county(
         )
         return schemas.CountyDetails.from_model(request, db_county)
     except crud.ItemNotFoundException as err:
-        raise HTTPException(status_code=404, detail="No such County")
+        raise HTTPException(status_code=404, detail="No such County") from err
     except crud.UpdateException as err:
-        raise HTTPException(status_code=422, detail=f"{err}")
+        raise HTTPException(status_code=422, detail=f"{err}") from err
