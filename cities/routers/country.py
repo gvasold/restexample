@@ -1,7 +1,9 @@
+import os
 from typing import List, Optional, Union
 
 import sqlalchemy.exc
 from fastapi import APIRouter, Depends, HTTPException, Path, Query, Request, Response
+from fastapi.responses import FileResponse
 from sqlalchemy.orm import Session
 
 from .. import crud, database, models, schemas
@@ -18,7 +20,27 @@ router = APIRouter(
     },
 )
 
+AVAILABLE_IMAGES = {
+    'image/svg+xml': 'svg', 
+    'image/png': 'png', 
+    'image/jpeg': 'jpg',
+    'image/gif': 'gif'
+}
 
+def get_image_file_for(country_id, img_type):
+    "Return path to file for requested image format."
+    img_dir = os.path.dirname(__file__)
+    return os.path.abspath(os.path.join(img_dir, '..', 'data', 
+        f'{country_id}.{AVAILABLE_IMAGES[img_type]}'))
+
+def parse_accept_header(accept):
+    "Return the first available image format requested via accept or None."
+    if accept:
+        for media_type in accept.split(','):
+            media_type = media_type.split(';')[0].strip()
+            if media_type in AVAILABLE_IMAGES:
+                return media_type
+    
 
 @router.head(
     "/{country_id}",
@@ -34,6 +56,21 @@ async def get_country_by_id(
         default=..., title="Country id", description="The id of the country to request."
     ),
 ):
+    # For demonstration purposes we support requesting some image types
+    accept = request.headers.get('accept', '')
+    # checking for text/html is dirty hack, because browsers accept some image 
+    # types by default, which I want to avoid for didactic reasons 
+    if 'image/' in accept and not 'text/html' in accept:  
+        supported_img_type = request.headers.get('accept', '')
+        if supported_img_type:
+            img_file = get_image_file_for(country_id, supported_img_type)
+            if os.path.exists(img_file):
+                return FileResponse(img_file, media_type=supported_img_type)
+            else:
+                raise HTTPException(status_code=404, detail="No such image")
+        else:
+            raise HTTPException(status_code=404, detail="No such image")
+
     "Get a single Country with id `country_id`."
     db_country = crud.get_country(db=db, country_id=country_id)
     if not db_country:

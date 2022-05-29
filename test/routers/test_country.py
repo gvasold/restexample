@@ -1,8 +1,6 @@
 """Test endpoints defined in routers/country.
 """
-import pytest
-from cities.crud import create_country
-from cities.schemas import CountryCreate
+from cities.routers.country import get_image_file_for, parse_accept_header
 
 
 def test_get_with_id(client, counties):
@@ -94,3 +92,24 @@ def test_patch_non_existing(client, counties):
     "Patching a non existing country leads to 404."
     response = client.patch("/countries/987654", json={"name": "Foo"})
     assert response.status_code == 404
+
+
+def test_parse_accept_header():
+    "Function should return the first matching content type."
+    result = parse_accept_header(
+        "text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,*/*;q=0.8"
+    )
+    assert result is None
+
+    assert parse_accept_header("image/svg+xml") == "image/svg+xml"
+    assert parse_accept_header("image/png") == "image/png"
+    assert parse_accept_header("image/jpeg") == "image/jpeg"
+    assert parse_accept_header("image/gif") == "image/gif"
+
+
+def test_get_image_file_for():
+    "Should return path to the image file."
+    assert "1.png" in get_image_file_for(1, "image/png")
+    assert "2.jpg" in get_image_file_for(2, "image/jpeg")
+    assert "3.gif" in get_image_file_for(3, "image/gif")
+    assert "4.svg" in get_image_file_for(4, "image/svg+xml")
