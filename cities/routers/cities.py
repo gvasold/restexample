@@ -45,7 +45,7 @@ async def get_cities(
         default=20,
         title="Number of result entries",
         gt=0,
-        description="Number of counties to be returned. Can be used for paging.",
+        description="Number of cities to be returned. Can be used for paging.",
     ),
     q: Union[str, None] = Query(
         default=None, title="Query string", description="(Sub)String to search for."
