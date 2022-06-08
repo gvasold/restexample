@@ -103,8 +103,8 @@ async def create_city(
 ):
     "Create a new City."
     db_city = crud.get_city_by_name(db, city.name)
-    if db_city:
-        raise HTTPException(status_code=400, detail="City already exists.")
+    #if db_city:
+    #    raise HTTPException(status_code=400, detail="City already exists.")
     try:
         db_city = crud.create_city(db=db, city=city, city_id=city.id)
         return schemas.CityDetails.from_model(request, db_city)
